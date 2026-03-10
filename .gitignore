@@ -1,0 +1,13 @@
+# Secrets
+.env
+credentials.json
+token.json
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments (if you create one later)
+venv/
+env/
+.venv/

@@ -1,0 +1,22 @@
+streamlit>=1.36.0
+python-dotenv>=1.0.1
+pypdf>=4.0.0
+
+# LangChain + Gemini (LLM only — not used for embeddings)
+langchain>=0.2.6
+langchain-core>=0.2.6
+langchain-community>=0.2.6
+langchain-google-genai>=2.0.0
+langchain-text-splitters>=0.2.2
+langgraph>=0.1.0
+
+# Local embeddings — no quota, no API key needed
+sentence-transformers>=3.0.1
+
+# Vector DB
+chromadb>=0.5.3
+
+# Google APIs (Docs/Drive export)
+google-auth>=2.29.0
+google-auth-oauthlib>=1.2.0
+google-api-python-client>=2.126.0
