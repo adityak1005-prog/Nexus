@@ -11,3 +11,5 @@ __pycache__/
 venv/
 env/
 .venv/
+chroma_store/
+projects_data/
