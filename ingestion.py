@@ -1,167 +1,169 @@
 """
-ingestion.py — PDF parsing + ChromaDB storage
-Embeddings: Gemini embedding-001 (free, v1beta compatible)
-Auth: GOOGLE_API_KEY from .env
+ingestion.py — PDF pipeline
+Embedding:  FastEmbed (ONNX, BAAI/bge-small-en-v1.5)
+PDF parse:  pypdf (Unstructured as optional upgrade)
+Vector DB:  ChromaDB (cosine similarity)
 """
-
-import os
-import json
-import hashlib
+import os, json, hashlib, time, logging
 from datetime import datetime
 
-from pypdf import PdfReader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from sentence_transformers import SentenceTransformer
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage
-from chromadb.config import Settings
 import chromadb
+from chromadb.config import Settings
 from dotenv import load_dotenv
+from langchain_core.messages import HumanMessage
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from projects import get_chroma_collection_name
 
 load_dotenv()
+logging.getLogger("langsmith").setLevel(logging.WARNING)
 
 CHROMA_DIR    = "./chroma_store"
-EMBED_MODEL   = "all-MiniLM-L6-v2"   # local, free, no quota, 80MB one-time download
-CHUNK_SIZE    = 800
+EMBED_MODEL   = "BAAI/bge-small-en-v1.5"
+CHUNK_SIZE    = 900
 CHUNK_OVERLAP = 150
 
-_embedder   = None
-_collection = None
-_llm        = None
-
-
+# ── FastEmbed ──────────────────────────────────────────────────────────────────
+_embedder = None
 def get_embedder():
     global _embedder
     if _embedder is None:
-        print("⏳ Loading embedding model (one-time)...")
-        _embedder = SentenceTransformer(EMBED_MODEL)
-        print("✅ Embedding model ready.")
+        from sentence_transformers import SentenceTransformer
+        _embedder = SentenceTransformer("BAAI/bge-small-en-v1.5")
     return _embedder
 
+# NEW (sentence-transformers syntax)
+def embed_texts(texts: list[str]) -> list[list[float]]:
+    return get_embedder().encode(texts, show_progress_bar=False).tolist()
 
+
+# ── ChromaDB ───────────────────────────────────────────────────────────────────
+_chroma_client = None
+def get_chroma_client():
+    global _chroma_client
+    if _chroma_client is None:
+        _chroma_client = chromadb.PersistentClient(
+            path=CHROMA_DIR,
+            settings=Settings(anonymized_telemetry=False)
+        )
+    return _chroma_client
+
+def get_collection(pid):
+    return get_chroma_client().get_or_create_collection(
+        name=get_chroma_collection_name(pid),
+        metadata={"hnsw:space": "cosine"}
+    )
+
+
+# ── Gemini for subtopic extraction ────────────────────────────────────────────
+_llm = None
 def get_llm():
     global _llm
     if _llm is None:
         _llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             temperature=0,
             google_api_key=os.getenv("GOOGLE_API_KEY")
         )
     return _llm
 
 
-def get_collection():
-    global _collection
-    if _collection is None:
-        client = chromadb.PersistentClient(
-            path=CHROMA_DIR,
-            settings=Settings(anonymized_telemetry=False)
-        )
-        _collection = client.get_or_create_collection(
-            name="research_papers",
-            metadata={"hnsw:space": "cosine"}
-        )
-    return _collection
-
-
 # ── PDF extraction ─────────────────────────────────────────────────────────────
+def extract_text(pdf_path: str) -> dict:
+    file_name = os.path.basename(pdf_path)
+    title, author, num_pages = file_name, "Unknown", 0
 
-def extract_text_from_pdf(pdf_path: str) -> dict:
-    reader = PdfReader(pdf_path)
-    meta   = reader.metadata or {}
-    page_texts = []
-    for i, page in enumerate(reader.pages):
-        text = page.extract_text() or ""
-        if text.strip():
-            page_texts.append({"page": i + 1, "text": text.strip()})
-    full_text = "\n\n".join(p["text"] for p in page_texts)
-    return {
-        "title":      meta.get("/Title", os.path.basename(pdf_path)),
-        "author":     meta.get("/Author", "Unknown"),
-        "num_pages":  len(reader.pages),
-        "full_text":  full_text,
-        "file_name":  os.path.basename(pdf_path),
-    }
+    # Try Unstructured first
+    try:
+        from unstructured.partition.pdf import partition_pdf
+        elements  = partition_pdf(filename=pdf_path, strategy="fast")
+        full_text = "\n\n".join(str(e) for e in elements if str(e).strip())
+        try:
+            from pypdf import PdfReader
+            reader    = PdfReader(pdf_path)
+            num_pages = len(reader.pages)
+            meta      = reader.metadata or {}
+            title     = meta.get("/Title", file_name) or file_name
+            author    = meta.get("/Author", "Unknown") or "Unknown"
+        except Exception:
+            pass
+        if full_text.strip():
+            return {"title": title, "author": author, "num_pages": num_pages,
+                    "full_text": full_text, "file_name": file_name, "parser": "unstructured"}
+    except Exception:
+        pass
+
+    # Fallback: pypdf
+    try:
+        from pypdf import PdfReader
+        reader    = PdfReader(pdf_path)
+        meta      = reader.metadata or {}
+        title     = meta.get("/Title", file_name) or file_name
+        author    = meta.get("/Author", "Unknown") or "Unknown"
+        num_pages = len(reader.pages)
+        pages     = [p.extract_text() or "" for p in reader.pages]
+        full_text = "\n\n".join(t.strip() for t in pages if t.strip())
+        return {"title": title, "author": author, "num_pages": num_pages,
+                "full_text": full_text, "file_name": file_name, "parser": "pypdf"}
+    except Exception as e:
+        return {"title": file_name, "author": "Unknown", "num_pages": 0,
+                "full_text": "", "file_name": file_name, "parser": "error", "error": str(e)}
 
 
-def file_hash(pdf_path: str) -> str:
-    with open(pdf_path, "rb") as f:
+def file_hash(path: str) -> str:
+    with open(path, "rb") as f:
         return hashlib.md5(f.read()).hexdigest()
 
-
 def chunk_text(text: str) -> list[str]:
-    splitter = RecursiveCharacterTextSplitter(
+    return RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
-        separators=["\n\n", "\n", ". ", " "],
-    )
-    return splitter.split_text(text)
-
-
-# ── Subtopic extraction ────────────────────────────────────────────────────────
+        separators=["\n\n", "\n", ". ", " "]
+    ).split_text(text)
 
 def extract_subtopics(title: str, full_text: str) -> list[str]:
-    """
-    Asks Gemini to identify research subtopics from title + abstract only.
-    Retries once on quota (429) errors with a 35s wait.
-    Falls back to ["uncategorized"] silently so ingestion never fails.
-    """
-    import time
-    llm = get_llm()
     snippet = full_text[:800].replace("\n", " ").strip()
-    prompt = (
-        f"List 3-5 research subtopics covered by this paper as a JSON array of short strings. "
-        f"No explanation. No markdown. Example: [\"topic a\", \"topic b\"]\n\n"
-        f"Title: {title}\nAbstract: {snippet}"
+    prompt  = (
+        f"List 3-5 research subtopics for this paper as a JSON array of short strings. "
+        f"No explanation, no markdown fences.\n"
+        f"Title: {title}\nAbstract/intro: {snippet}"
     )
     for attempt in range(2):
         try:
-            response = llm.invoke([HumanMessage(content=prompt)])
-            raw = response.content.strip().strip("```json").strip("```").strip()
-            subtopics = json.loads(raw)
-            if isinstance(subtopics, list):
-                return [str(s).lower().strip() for s in subtopics]
+            r   = get_llm().invoke([HumanMessage(content=prompt)])
+            raw = r.content.strip().strip("```json").strip("```").strip()
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                return [str(x).lower().strip() for x in parsed]
         except Exception as e:
             if ("429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)) and attempt == 0:
-                time.sleep(35)  # wait out per-minute quota window then retry
+                time.sleep(35)
                 continue
-            break  # non-quota error or second failure → fall through
+            break
     return ["uncategorized"]
 
 
-# ── Main ingest pipeline ───────────────────────────────────────────────────────
+# ── Ingestion pipeline ─────────────────────────────────────────────────────────
+def ingest_pdf(pdf_path: str, project_id: str, uploaded_by: str = "anonymous") -> dict:
+    col = get_collection(project_id)
+    dh  = file_hash(pdf_path)
 
-def ingest_pdf(pdf_path: str, uploaded_by: str = "anonymous") -> dict:
-    """
-    Full pipeline: PDF → extract → subtopics → chunk → embed → ChromaDB
-    Deduplicates by MD5. Returns status dict.
-    """
-    collection = get_collection()
-    embedder   = get_embedder()
+    if col.get(where={"doc_hash": dh})["ids"]:
+        return {"status": "skipped", "file_name": os.path.basename(pdf_path),
+                "chunks": 0, "doc_hash": dh}
 
-    doc_hash = file_hash(pdf_path)
-    existing = collection.get(where={"doc_hash": doc_hash})
-    if existing["ids"]:
-        return {"status": "skipped", "reason": "Already ingested",
-                "file_name": os.path.basename(pdf_path), "chunks": 0}
-
-    paper = extract_text_from_pdf(pdf_path)
+    paper = extract_text(pdf_path)
     if not paper["full_text"].strip():
-        return {"status": "error", "reason": "No extractable text (scanned PDF?)",
-                "file_name": paper["file_name"], "chunks": 0}
+        return {"status": "error", "reason": f"No extractable text (parser: {paper.get('parser','?')})",
+                "file_name": paper["file_name"], "chunks": 0, "doc_hash": ""}
 
-    # Extract subtopics via Gemini
-    subtopics = extract_subtopics(paper["title"], paper["full_text"])
-
+    subtopics  = extract_subtopics(paper["title"], paper["full_text"])
     chunks     = chunk_text(paper["full_text"])
-    embeddings = embedder.encode(chunks, show_progress_bar=False).tolist()
+    embeddings = embed_texts(chunks)
 
-    ids       = [f"{doc_hash}_chunk_{i}" for i in range(len(chunks))]
-    # Store subtopics as comma-separated string (ChromaDB metadata must be str/int/float)
-    subtopics_str = ", ".join(subtopics)
-
-    metadatas = [{
-        "doc_hash":    doc_hash,
+    ids   = [f"{dh}_chunk_{i}" for i in range(len(chunks))]
+    metas = [{
+        "doc_hash":    dh,
         "file_name":   paper["file_name"],
         "title":       paper["title"],
         "author":      paper["author"],
@@ -169,10 +171,11 @@ def ingest_pdf(pdf_path: str, uploaded_by: str = "anonymous") -> dict:
         "chunk_index": i,
         "uploaded_by": uploaded_by,
         "uploaded_at": datetime.now().isoformat(),
-        "subtopics":   subtopics_str,
+        "subtopics":   ", ".join(subtopics),
+        "parser":      paper.get("parser", "unknown"),
     } for i in range(len(chunks))]
 
-    collection.add(ids=ids, embeddings=embeddings, documents=chunks, metadatas=metadatas)
+    col.add(ids=ids, embeddings=embeddings, documents=chunks, metadatas=metas)
 
     return {
         "status":    "success",
@@ -181,100 +184,83 @@ def ingest_pdf(pdf_path: str, uploaded_by: str = "anonymous") -> dict:
         "author":    paper["author"],
         "num_pages": paper["num_pages"],
         "chunks":    len(chunks),
-        "doc_hash":  doc_hash,
+        "doc_hash":  dh,
         "subtopics": subtopics,
         "full_text": paper["full_text"],
+        "parser":    paper.get("parser"),
     }
 
 
-# ── Query ──────────────────────────────────────────────────────────────────────
+# ── Query ─────────────────────────────────────────────────────────────────────
+def query_papers(query: str, project_id: str, n_results: int = 5) -> list[dict]:
+    col   = get_collection(project_id)
+    total = col.count()
+    if total == 0:
+        return []
 
-def query_papers(query: str, n_results: int = 5) -> list[dict]:
-    """Semantic search across all papers. Returns top-n scored chunks."""
-    collection      = get_collection()
-    embedder        = get_embedder()
-    query_embedding = embedder.encode([query]).tolist()
+    fetch_n = min(n_results * 2, total)
+    qe      = embed_texts([query])
 
-    results = collection.query(
-        query_embeddings=[query_embedding],
-        n_results=n_results,
-        include=["documents", "metadatas", "distances"],
+    res = col.query(
+        query_embeddings=qe,
+        n_results=fetch_n,
+        include=["documents", "metadatas", "distances"]
     )
 
-    hits = []
-    for i in range(len(results["ids"][0])):
-        m = results["metadatas"][0][i]
-        hits.append({
-            "chunk":     results["documents"][0][i],
-            "score":     round(1 - results["distances"][0][i], 3),
-            "file_name": m["file_name"],
-            "title":     m["title"],
-            "author":    m["author"],
-            "chunk_idx": m["chunk_index"],
-            "doc_hash":  m["doc_hash"],
-            "subtopics": m.get("subtopics", ""),
-        })
-    return hits
+    hits = [{
+        "chunk":     res["documents"][0][i],
+        "score":     round(1 - res["distances"][0][i], 3),
+        "file_name": res["metadatas"][0][i]["file_name"],
+        "title":     res["metadatas"][0][i]["title"],
+        "author":    res["metadatas"][0][i]["author"],
+        "chunk_idx": res["metadatas"][0][i]["chunk_index"],
+        "doc_hash":  res["metadatas"][0][i]["doc_hash"],
+    } for i in range(len(res["ids"][0]))]
+
+    return hits[:n_results]
 
 
-# ── Library helpers ────────────────────────────────────────────────────────────
-
-def list_ingested_papers() -> list[dict]:
-    """One record per unique paper."""
-    collection = get_collection()
-    all_items  = collection.get(include=["metadatas"])
+# ── Helpers ────────────────────────────────────────────────────────────────────
+def list_ingested_papers(pid: str) -> list[dict]:
+    col  = get_collection(pid)
+    data = col.get(include=["metadatas"])
     seen = {}
-    for meta in all_items["metadatas"]:
-        h = meta["doc_hash"]
+    for m in data["metadatas"]:
+        h = m["doc_hash"]
         if h not in seen:
             seen[h] = {
-                "title":       meta["title"],
-                "author":      meta["author"],
-                "file_name":   meta["file_name"],
-                "num_pages":   meta["num_pages"],
-                "uploaded_by": meta["uploaded_by"],
-                "uploaded_at": meta["uploaded_at"],
+                "title":       m["title"],
+                "author":      m["author"],
+                "file_name":   m["file_name"],
+                "num_pages":   m["num_pages"],
+                "uploaded_by": m["uploaded_by"],
+                "uploaded_at": m["uploaded_at"],
                 "doc_hash":    h,
-                "subtopics":   meta.get("subtopics", "").split(", "),
+                "subtopics":   [t.strip() for t in m.get("subtopics","").split(",") if t.strip()],
+                "parser":      m.get("parser","unknown"),
             }
     return list(seen.values())
 
+def get_full_text(doc_hash: str, pid: str) -> str:
+    col = get_collection(pid)
+    r   = col.get(where={"doc_hash": doc_hash}, include=["documents","metadatas"])
+    if not r["ids"]:
+        return ""
+    paired = sorted(zip(r["metadatas"], r["documents"]), key=lambda x: x[0]["chunk_index"])
+    return "\n\n".join(d for _, d in paired)
 
-def get_topic_coverage() -> dict:
-    """
-    Returns a dict mapping each subtopic → list of papers covering it.
-    Used by the subtopic tracker to show gaps.
-    """
-    papers = list_ingested_papers()
-    coverage = {}
-    for paper in papers:
-        for topic in paper["subtopics"]:
-            topic = topic.strip()
-            if not topic:
-                continue
-            if topic not in coverage:
-                coverage[topic] = []
-            coverage[topic].append(paper["title"] or paper["file_name"])
-    return coverage
-
-
-def delete_paper(doc_hash: str) -> int:
-    collection = get_collection()
-    existing   = collection.get(where={"doc_hash": doc_hash})
-    if existing["ids"]:
-        collection.delete(ids=existing["ids"])
-        return len(existing["ids"])
+def delete_paper(doc_hash: str, pid: str) -> int:
+    col = get_collection(pid)
+    ex  = col.get(where={"doc_hash": doc_hash})
+    if ex["ids"]:
+        col.delete(ids=ex["ids"])
+        return len(ex["ids"])
     return 0
 
-
-def get_full_text_for_paper(doc_hash: str) -> str:
-    """Reconstructs full paper text from stored chunks in correct order."""
-    collection = get_collection()
-    result = collection.get(
-        where={"doc_hash": doc_hash},
-        include=["documents", "metadatas"]
-    )
-    if not result["ids"]:
-        return ""
-    paired = sorted(zip(result["metadatas"], result["documents"]), key=lambda x: x[0]["chunk_index"])
-    return "\n\n".join(doc for _, doc in paired)
+def get_topic_coverage(pid: str) -> dict:
+    cov = {}
+    for p in list_ingested_papers(pid):
+        for t in p["subtopics"]:
+            if t:
+                cov.setdefault(t, []).append(p["title"] or p["file_name"])
+    return cov

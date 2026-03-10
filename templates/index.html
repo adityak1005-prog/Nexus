@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nexus — Research Intelligence Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  window.mermaid = mermaid;
+  mermaid.initialize({ startOnLoad: false, theme: 'dark', darkMode: true,
+    themeVariables: { darkMode: true, background: '#0d1117', primaryColor: '#6366f1',
+      primaryTextColor: '#e6edf3', edgeLabelBackground: '#161b22', lineColor: '#6366f1' }});
+</script>
+<style>
+:root {
+  --bg0: #0d1117; --bg1: #161b22; --bg2: #1c2333; --bg3: #21262d;
+  --border: #30363d; --border2: #3d444d;
+  --accent: #6366f1; --accent2: #818cf8; --accent-glow: rgba(99,102,241,.15);
+  --blue: #3b82f6; --green: #22c55e; --red: #ef4444; --orange: #f59e0b; --purple: #a855f7;
+  --text0: #e6edf3; --text1: #9198a1; --text2: #545d68;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg0); color: var(--text0); font-family: 'Inter', sans-serif; font-size: 14px; overflow: hidden; }
+::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── LAYOUT ── */
+.shell { display: flex; height: 100vh; }
+.sidebar { width: 260px; min-width: 260px; background: var(--bg1); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+/* ── SIDEBAR ── */
+.brand { padding: 20px 18px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.brand-logo { display: flex; align-items: center; gap: 10px; }
+.brand-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--purple)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.brand-name { font-size: 15px; font-weight: 800; letter-spacing: -.5px; }
+.brand-tag { font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: .12em; margin-top: 1px; }
+
+.project-selector { padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.project-label { font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: .1em; font-weight: 600; margin-bottom: 6px; }
+.project-select { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; color: var(--text0); font-size: 12px; font-family: inherit; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239198a1' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+.project-select:focus { outline: none; border-color: var(--accent); }
+.btn-new-project { width: 100%; margin-top: 8px; background: var(--accent-glow); border: 1px dashed rgba(99,102,241,.4); border-radius: 7px; padding: 7px; color: var(--accent2); font-size: 11px; font-family: inherit; cursor: pointer; transition: all .15s; }
+.btn-new-project:hover { background: rgba(99,102,241,.25); border-color: var(--accent); }
+
+.sb-section { padding: 10px 14px 4px; font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: .12em; font-weight: 700; flex-shrink: 0; }
+
+.nav-list { list-style: none; padding: 4px 8px; flex-shrink: 0; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text1); transition: all .15s; margin-bottom: 2px; }
+.nav-item:hover { background: var(--bg2); color: var(--text0); }
+.nav-item.active { background: var(--accent-glow); color: var(--accent2); border: 1px solid rgba(99,102,241,.25); }
+.nav-icon { font-size: 14px; width: 18px; text-align: center; }
+.nav-badge { margin-left: auto; background: var(--accent); color: #fff; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+
+.team-section { padding: 10px 14px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.team-avatars { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; border: 2px solid var(--bg1); position: relative; cursor: default; }
+.avatar-online::after { content: ''; position: absolute; bottom: -1px; right: -1px; width: 8px; height: 8px; background: var(--green); border-radius: 50%; border: 1.5px solid var(--bg1); }
+
+.paper-list { flex: 1; overflow-y: auto; padding: 4px 8px 12px; }
+.paper-item { padding: 10px 10px; border-radius: 7px; cursor: pointer; margin-bottom: 3px; border: 1px solid transparent; transition: all .15s; }
+.paper-item:hover { background: var(--bg2); }
+.paper-item.active { background: var(--bg2); border-color: rgba(99,102,241,.4); }
+.paper-item-title { font-size: 11.5px; font-weight: 600; color: var(--text0); line-height: 1.4; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.paper-item-meta { font-size: 10px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.dot-green { background: var(--green); } .dot-orange { background: var(--orange); } .dot-gray { background: var(--text2); }
+
+/* ── MAIN HEADER ── */
+.topbar { padding: 0 24px; background: var(--bg1); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; height: 52px; flex-shrink: 0; }
+.topbar-title { font-size: 13px; font-weight: 700; color: var(--text0); }
+.topbar-sub { font-size: 11px; color: var(--text2); }
+.topbar-sep { color: var(--border2); }
+.topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+.tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg1); padding: 0 24px; flex-shrink: 0; gap: 2px; }
+.tab { padding: 12px 14px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.tab:hover { color: var(--text1); }
+.tab.active { color: var(--text0); border-bottom-color: var(--accent); }
+.tab-count { background: var(--bg3); color: var(--text2); font-size: 9px; padding: 1px 5px; border-radius: 5px; }
+
+/* ── CONTENT ── */
+.content { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* ── CARDS ── */
+.card { background: var(--bg1); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+.card-sm { background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text2); margin-bottom: 10px; }
+
+/* ── STAT CARDS ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+.stat-icon { font-size: 18px; margin-bottom: 8px; }
+.stat-val { font-size: 28px; font-weight: 800; letter-spacing: -1px; color: var(--text0); line-height: 1; }
+.stat-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
+.stat-sub { font-size: 10px; color: var(--green); margin-top: 2px; font-weight: 500; }
+
+/* ── BUTTONS ── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all .15s; border: none; }
+.btn-primary { background: var(--accent); color: #fff; } .btn-primary:hover { background: #5254c9; }
+.btn-secondary { background: var(--bg2); border: 1px solid var(--border); color: var(--text0); } .btn-secondary:hover { border-color: var(--border2); background: var(--bg3); }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text1); } .btn-ghost:hover { border-color: var(--border2); color: var(--text0); }
+.btn-danger { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); color: var(--red); } .btn-danger:hover { background: rgba(239,68,68,.2); }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+.btn-icon { width: 32px; height: 32px; padding: 0; justify-content: center; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── BADGES ── */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.badge-summarized { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+.badge-processing { background: rgba(245,158,11,.12); color: var(--orange); border: 1px solid rgba(245,158,11,.25); }
+.badge-pending { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+.badge-high { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+.badge-medium { background: rgba(245,158,11,.12); color: var(--orange); border: 1px solid rgba(245,158,11,.25); }
+.badge-low { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.25); }
+
+/* ── TAGS ── */
+.tag { display: inline-block; font-size: 9.5px; font-family: 'JetBrains Mono', monospace; background: rgba(99,102,241,.12); color: var(--accent2); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(99,102,241,.2); margin: 2px; }
+
+/* ── INPUTS ── */
+.input { background: var(--bg2); border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; color: var(--text0); font-family: inherit; font-size: 13px; width: 100%; transition: border-color .15s; }
+.input:focus { outline: none; border-color: var(--accent); }
+.input::placeholder { color: var(--text2); }
+.textarea { resize: vertical; min-height: 80px; }
+.label { font-size: 11px; font-weight: 600; color: var(--text1); margin-bottom: 6px; display: block; }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone { border: 2px dashed var(--border2); border-radius: 10px; padding: 36px 24px; text-align: center; cursor: pointer; transition: all .2s; }
+.upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--accent-glow); }
+.upload-icon { font-size: 32px; margin-bottom: 12px; }
+.upload-title { font-size: 14px; font-weight: 600; color: var(--text0); margin-bottom: 6px; }
+.upload-sub { font-size: 12px; color: var(--text2); }
+
+/* ── CHAT ── */
+.chat-container { display: flex; flex-direction: column; height: 100%; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+.msg { display: flex; gap: 12px; animation: fadeUp .25s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.msg-avatar { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; }
+.msg-body { flex: 1; min-width: 0; }
+.msg-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; }
+.msg-name { font-size: 12px; font-weight: 700; color: var(--text0); }
+.msg-time { font-size: 10px; color: var(--text2); }
+.msg-ai .msg-name { color: var(--accent2); }
+.msg-content { font-size: 13px; color: var(--text1); line-height: 1.7; }
+.msg-content code { font-family: 'JetBrains Mono', monospace; background: var(--bg3); padding: 1px 5px; border-radius: 3px; font-size: 11.5px; color: var(--accent2); }
+.msg-content pre { background: var(--bg0); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 8px 0; overflow-x: auto; }
+.msg-content h2, .msg-content h3 { font-size: 13px; font-weight: 700; margin: 12px 0 6px; color: var(--text0); }
+.msg-content ul, .msg-content ol { padding-left: 18px; margin: 6px 0; }
+.msg-content li { margin-bottom: 3px; }
+.msg-bubble { background: var(--bg2); border: 1px solid var(--border); border-radius: 0 10px 10px 10px; padding: 12px 16px; }
+.msg-ai .msg-bubble { background: var(--bg1); border-color: rgba(99,102,241,.2); }
+.citations-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.cite-chip { font-size: 10px; background: var(--accent-glow); color: var(--accent2); border: 1px solid rgba(99,102,241,.3); padding: 2px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
+.chat-input-area { padding: 16px 24px; border-top: 1px solid var(--border); background: var(--bg1); }
+.chat-input-row { display: flex; gap: 10px; align-items: flex-end; }
+.chat-textarea { flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text0); font-family: inherit; font-size: 13px; resize: none; min-height: 44px; max-height: 120px; transition: border-color .15s; }
+.chat-textarea:focus { outline: none; border-color: var(--accent); }
+.typing-indicator { display: flex; gap: 4px; padding: 12px 16px; align-items: center; }
+.typing-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: bounce .8s infinite; }
+.typing-dot:nth-child(2) { animation-delay: .15s; } .typing-dot:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+
+/* ── PAPER GRID ── */
+.paper-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.paper-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 10px; padding: 16px; transition: all .2s; cursor: pointer; }
+.paper-card:hover { border-color: rgba(99,102,241,.4); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+.paper-card.selected { border-color: var(--accent); background: rgba(99,102,241,.05); }
+.pc-title { font-size: 13px; font-weight: 600; line-height: 1.4; margin-bottom: 8px; color: var(--text0); }
+.pc-author { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+.pc-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.pc-footer { display: flex; align-items: center; justify-content: space-between; }
+.pc-meta { font-size: 10px; color: var(--text2); }
+
+/* ── KNOWLEDGE GRAPH ── */
+#kg-canvas { width: 100%; height: 100%; border-radius: 10px; }
+.kg-legend { display: flex; gap: 16px; margin-top: 10px; }
+.kg-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text1); }
+.kg-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* ── MERMAID ── */
+.mermaid-container { background: var(--bg0); border: 1px solid var(--border); border-radius: 10px; padding: 24px; min-height: 200px; display: flex; align-items: center; justify-content: center; overflow: auto; }
+.mermaid-container svg { max-width: 100%; }
+
+/* ── MARKDOWN CONTENT ── */
+.md-content { font-size: 13px; color: var(--text1); line-height: 1.75; }
+.md-content h2 { font-size: 14px; font-weight: 700; color: var(--text0); margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+.md-content h3 { font-size: 13px; font-weight: 600; color: var(--text0); margin: 14px 0 6px; }
+.md-content ul { padding-left: 18px; margin: 6px 0; }
+.md-content li { margin-bottom: 4px; }
+.md-content strong { color: var(--text0); font-weight: 600; }
+.md-content code { font-family: 'JetBrains Mono', monospace; background: var(--bg3); padding: 1px 5px; border-radius: 3px; font-size: 11.5px; color: var(--accent2); }
+
+/* ── MODAL ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn .2s ease; }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.modal { background: var(--bg1); border: 1px solid var(--border2); border-radius: 14px; width: 480px; max-width: 90vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 24px 80px rgba(0,0,0,.5); }
+.modal-header { padding: 20px 22px 14px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 15px; font-weight: 700; }
+.modal-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+.modal-body { padding: 18px 22px; }
+.modal-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ── PROGRESS ── */
+.progress-bar { height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--purple)); border-radius: 2px; transition: width .3s ease; }
+
+/* ── ANNOTATION ── */
+.annotation { padding: 10px 12px; background: var(--bg2); border-radius: 7px; border: 1px solid var(--border); margin-bottom: 8px; }
+.ann-meta { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text2); margin-bottom: 5px; }
+.ann-text { font-size: 12px; color: var(--text1); line-height: 1.5; }
+
+/* ── INSIGHTS CARD ── */
+.insight-section { margin-bottom: 24px; }
+.insight-title { font-size: 13px; font-weight: 700; color: var(--text0); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 18px; font-size: 12px; z-index: 9999; animation: slideUp .25s ease; box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+.toast-success { border-color: rgba(34,197,94,.4); color: var(--green); }
+.toast-error { border-color: rgba(239,68,68,.4); color: var(--red); }
+@keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+/* ── EMPTY STATE ── */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 24px; text-align: center; color: var(--text2); }
+.empty-icon { font-size: 40px; margin-bottom: 14px; opacity: .6; }
+.empty-title { font-size: 14px; font-weight: 600; color: var(--text1); margin-bottom: 6px; }
+.empty-sub { font-size: 12px; }
+
+/* ── SELECTION BAR ── */
+.selection-bar { background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.3); border-radius: 8px; padding: 10px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 16px; font-size: 12px; color: var(--accent2); }
+
+/* ── TWO PANEL ── */
+.two-panel { display: flex; gap: 16px; height: 100%; }
+.panel-left { flex: 1; min-width: 0; }
+.panel-right { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
+
+/* ── LOADING SPINNER ── */
+.spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.gap-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.insight-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.insight-card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+</style>
+</head>
+<body x-data="app()" x-init="init()">
+
+<!-- ══════════════════════════════════════════════════════ SHELL -->
+<div class="shell">
+
+  <!-- ════════════════ SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">
+        <div class="brand-icon">✦</div>
+        <div>
+          <div class="brand-name">Nexus</div>
+          <div class="brand-tag">Research Intelligence</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project selector -->
+    <div class="project-selector">
+      <div class="project-label">Active Project</div>
+      <select class="project-select" x-model="activePid" @change="onProjectChange()">
+        <option value="">— Select project —</option>
+        <template x-for="p in projects" :key="p.id">
+          <option :value="p.id" x-text="p.name"></option>
+        </template>
+      </select>
+      <button class="btn-new-project" @click="showCreateProject=true">+ New Project</button>
+    </div>
+
+    <!-- Nav -->
+    <div class="sb-section">Navigation</div>
+    <ul class="nav-list">
+      <li class="nav-item" :class="{active: tab==='dashboard'}" @click="tab='dashboard'">
+        <span class="nav-icon">⬡</span> Dashboard
+      </li>
+      <li class="nav-item" :class="{active: tab==='library'}" @click="tab='library'">
+        <span class="nav-icon">📚</span> Library
+        <span class="nav-badge" x-show="project?.papers && Object.keys(project.papers).length > 0" x-text="Object.keys(project?.papers||{}).length"></span>
+      </li>
+      <li class="nav-item" :class="{active: tab==='chat'}" @click="tab='chat'">
+        <span class="nav-icon">💬</span> Research Chat
+      </li>
+      <li class="nav-item" :class="{active: tab==='insights'}" @click="tab='insights'">
+        <span class="nav-icon">🔍</span> Insights
+      </li>
+      <li class="nav-item" :class="{active: tab==='graph'}" @click="tab='graph'; $nextTick(()=>renderGraph())">
+        <span class="nav-icon">🕸️</span> Knowledge Graph
+      </li>
+      <li class="nav-item" :class="{active: tab==='visuals'}" @click="tab='visuals'">
+        <span class="nav-icon">⚡</span> Diagrams
+      </li>
+    </ul>
+
+    <!-- Team -->
+    <div class="sb-section" x-show="project">Team</div>
+    <div class="team-section" x-show="project">
+      <div class="team-avatars">
+        <template x-for="(collab, name) in (project?.collaborators||{})" :key="name">
+          <div class="avatar avatar-online" :style="`background:${collab.color}`"
+               :title="name" x-text="initials(name)"></div>
+        </template>
+      </div>
+      <div style="margin-top:8px">
+        <input class="input" style="font-size:11px;padding:6px 10px" placeholder="Your name…" x-model="username"/>
+      </div>
+    </div>
+
+    <!-- Paper list -->
+    <div class="sb-section" x-show="project && Object.keys(project?.papers||{}).length > 0">Papers</div>
+    <div class="paper-list" x-show="project">
+      <template x-for="(p, hash) in (project?.papers||{})" :key="hash">
+        <div class="paper-item" :class="{active: selectedHash===hash}"
+             @click="selectedHash=hash; selectedPaper=p; if(tab==='dashboard') tab='library'">
+          <div class="paper-item-title" x-text="p.title || p.file_name"></div>
+          <div class="paper-item-meta">
+            <span class="dot" :class="{'dot-green': p.status==='summarized', 'dot-orange': p.status==='processing', 'dot-gray': p.status==='pending'}"></span>
+            <span x-text="p.status"></span>
+            <span>·</span>
+            <span x-text="(p.num_pages||0)+'p'"></span>
+          </div>
+        </div>
+      </template>
+    </div>
+  </aside>
+
+  <!-- ════════════════ MAIN -->
+  <main class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <span class="topbar-title" x-text="project ? project.name : 'Nexus Research Platform'"></span>
+      <template x-if="project">
+        <span class="topbar-sep">›</span>
+      </template>
+      <span class="topbar-sub" x-text="tabLabel()"></span>
+      <div class="topbar-actions">
+        <template x-if="project">
+          <button class="btn btn-secondary btn-sm" @click="showUpload=true">
+            ↑ Upload Paper
+          </button>
+        </template>
+        <template x-if="!project && projects.length===0">
+          <button class="btn btn-primary btn-sm" @click="showCreateProject=true">
+            + Create First Project
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs" x-show="project">
+      <div class="tab" :class="{active: tab==='dashboard'}" @click="tab='dashboard'">⬡ Dashboard</div>
+      <div class="tab" :class="{active: tab==='library'}" @click="tab='library'">
+        📚 Library <span class="tab-count" x-text="Object.keys(project?.papers||{}).length"></span>
+      </div>
+      <div class="tab" :class="{active: tab==='chat'}" @click="tab='chat'">
+        💬 Chat <span class="tab-count" x-text="(project?.chat||[]).length"></span>
+      </div>
+      <div class="tab" :class="{active: tab==='insights'}" @click="tab='insights'">🔍 Insights</div>
+      <div class="tab" :class="{active: tab==='graph'}" @click="tab='graph'; $nextTick(()=>renderGraph())">🕸️ Graph</div>
+      <div class="tab" :class="{active: tab==='visuals'}" @click="tab='visuals'">⚡ Diagrams</div>
+    </div>
+
+    <!-- ═══ CONTENT AREA ═══ -->
+    <div class="content" x-show="!project">
+      <div class="empty-state">
+        <div class="empty-icon">✦</div>
+        <div class="empty-title">Welcome to Nexus</div>
+        <div class="empty-sub">Create or select a project to start your collaborative research journey</div>
+        <button class="btn btn-primary" style="margin-top:18px" @click="showCreateProject=true">Create New Project</button>
+      </div>
+    </div>
+
+    <!-- ─── DASHBOARD ─── -->
+    <div class="content" x-show="project && tab==='dashboard'" style="padding-bottom:40px">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📄</div>
+          <div class="stat-val" x-text="stats.total_papers||0"></div>
+          <div class="stat-label">Papers Uploaded</div>
+          <div class="stat-sub" x-show="stats.summarized>0" x-text="stats.summarized+' summarized'"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏷️</div>
+          <div class="stat-val" x-text="stats.topics||0"></div>
+          <div class="stat-label">Research Topics</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💬</div>
+          <div class="stat-val" x-text="stats.chat_messages||0"></div>
+          <div class="stat-label">Chat Messages</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-val" x-text="stats.collaborators||0"></div>
+          <div class="stat-label">Collaborators</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <!-- Problem Statement -->
+        <div class="card">
+          <div class="card-title">🎯 Problem Statement</div>
+          <p style="font-size:13px;color:var(--text1);line-height:1.7" x-text="project?.problem_statement"></p>
+        </div>
+        <!-- Coverage -->
+        <div class="card">
+          <div class="card-title">📊 Topic Coverage</div>
+          <template x-if="(stats.coverage_topics||[]).length > 0">
+            <div>
+              <template x-for="t in (stats.coverage_topics||[]).slice(0,12)" :key="t">
+                <span class="tag" x-text="t"></span>
+              </template>
+            </div>
+          </template>
+          <template x-if="(stats.coverage_topics||[]).length === 0">
+            <p style="font-size:12px;color:var(--text2)">Upload papers to see topic coverage</p>
+          </template>
+        </div>
+      </div>
+
+      <!-- Recent papers -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px">🕐 Recent Papers</div>
+        <template x-if="Object.keys(project?.papers||{}).length === 0">
+          <div class="empty-state" style="padding:32px">
+            <div class="empty-icon" style="font-size:24px">📄</div>
+            <div class="empty-title">No papers yet</div>
+            <div class="empty-sub">Click "Upload Paper" to add your first research paper</div>
+          </div>
+        </template>
+        <template x-for="(p, hash) in project?.papers||{}" :key="hash">
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;font-weight:600;color:var(--text0);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="p.title||p.file_name"></div>
+              <div style="font-size:10px;color:var(--text2)" x-text="(p.uploaded_by||'') + ' · ' + (p.num_pages||0) + ' pages · ' + (p.uploaded_at||'').slice(0,10)"></div>
+            </div>
+            <span class="badge" :class="'badge-'+p.status" x-text="p.status"></span>
+            <button class="btn btn-secondary btn-sm" @click="selectedHash=hash;selectedPaper=p;tab='library'">View →</button>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- ─── LIBRARY ─── -->
+    <div class="content" x-show="project && tab==='library'">
+      <div class="two-panel" style="height:calc(100vh - 108px)">
+        <!-- Left: paper grid -->
+        <div class="panel-left" style="overflow-y:auto">
+          <!-- Upload zone -->
+          <div class="upload-zone" :class="{drag: isDragging}"
+               @dragover.prevent="isDragging=true" @dragleave="isDragging=false"
+               @drop.prevent="onDrop($event)" @click="$refs.fileInput.click()"
+               style="margin-bottom:16px">
+            <input type="file" x-ref="fileInput" accept=".pdf" multiple style="display:none" @change="onFileInput($event)"/>
+            <div class="upload-icon">📄</div>
+            <div class="upload-title">Drop PDF files here</div>
+            <div class="upload-sub">or click to browse · Multiple files supported</div>
+          </div>
+
+          <!-- Upload progress -->
+          <template x-if="uploadQueue.length > 0">
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-title">Uploading <span x-text="uploadQueue.length"></span> file(s)…</div>
+              <template x-for="(item, i) in uploadQueue" :key="i">
+                <div style="margin-bottom:10px">
+                  <div style="font-size:11px;color:var(--text1);margin-bottom:4px;display:flex;justify-content:space-between">
+                    <span x-text="item.name"></span>
+                    <span x-text="item.status"></span>
+                  </div>
+                  <div class="progress-bar"><div class="progress-fill" :style="`width:${item.pct}%`"></div></div>
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <!-- Compare selection bar -->
+          <template x-if="compareSelected.length > 0">
+            <div class="selection-bar">
+              <span><strong x-text="compareSelected.length"></strong> papers selected for comparison</span>
+              <button class="btn btn-primary btn-sm" @click="runCompare()" :disabled="compareSelected.length < 2 || comparing">
+                <span x-show="comparing" class="spinner" style="width:12px;height:12px"></span>
+                Compare Papers
+              </button>
+              <button class="btn btn-ghost btn-sm" @click="compareSelected=[]">Clear</button>
+            </div>
+          </template>
+
+          <div class="paper-grid">
+            <template x-for="(p, hash) in (project?.papers||{})" :key="hash">
+              <div class="paper-card" :class="{selected: selectedHash===hash}"
+                   @click="selectedHash=hash; selectedPaper=p">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+                  <span class="badge" :class="'badge-'+p.status" x-text="p.status"></span>
+                  <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;color:var(--text2)" @click.stop>
+                    <input type="checkbox" :value="hash" x-model="compareSelected" style="cursor:pointer"/>
+                    Compare
+                  </label>
+                </div>
+                <div class="pc-title" x-text="p.title||p.file_name"></div>
+                <div class="pc-author" x-text="p.author!='Unknown' ? p.author : ''"></div>
+                <div class="pc-tags">
+                  <template x-for="t in (p.subtopics||[]).slice(0,3)" :key="t">
+                    <span class="tag" x-text="t"></span>
+                  </template>
+                </div>
+                <div class="pc-footer">
+                  <span class="pc-meta" x-text="(p.num_pages||0)+'p · '+(p.uploaded_by||'') + ' · '+(p.uploaded_at||'').slice(0,10)"></span>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Compare result -->
+          <template x-if="compareResult">
+            <div class="card" style="margin-top:20px">
+              <div class="card-title" style="margin-bottom:12px">⚔️ Comparison Results</div>
+              <div class="md-content" x-html="renderMd(compareResult)"></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Right: paper detail -->
+        <div class="panel-right" style="overflow-y:auto">
+          <template x-if="selectedPaper">
+            <div>
+              <div class="card" style="margin-bottom:12px">
+                <div style="font-size:14px;font-weight:700;line-height:1.4;margin-bottom:6px" x-text="selectedPaper.title||selectedPaper.file_name"></div>
+                <div style="font-size:11px;color:var(--text2);margin-bottom:10px" x-text="selectedPaper.author + ' · ' + (selectedPaper.num_pages||0) + ' pages'"></div>
+                <span class="badge" :class="'badge-'+(selectedPaper.status||'pending')" x-text="selectedPaper.status||'pending'"></span>
+                <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="btn btn-primary btn-sm" @click="analysePaper()"
+                          :disabled="analysing || selectedPaper.status==='summarized'">
+                    <span x-show="analysing" class="spinner" style="width:12px;height:12px"></span>
+                    <span x-show="!analysing" x-text="selectedPaper.status==='summarized'?'✓ Analysed':'✦ Analyse'"></span>
+                  </button>
+                  <button class="btn btn-ghost btn-sm" @click="analysePaper()" x-show="selectedPaper.status==='summarized'">↺ Re-run</button>
+                  <button class="btn btn-danger btn-sm" @click="deletePaper()">✕ Delete</button>
+                </div>
+              </div>
+
+              <!-- Topics -->
+              <div class="card-sm" style="background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px" x-show="(selectedPaper.subtopics||[]).length > 0">
+                <div class="card-title" style="margin-bottom:8px">🏷️ Key Topics</div>
+                <template x-for="t in (selectedPaper.subtopics||[])" :key="t">
+                  <span class="tag" x-text="t"></span>
+                </template>
+              </div>
+
+              <!-- Summary -->
+              <div class="card-sm" style="background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px">
+                <div class="card-title" style="margin-bottom:8px">📌 AI Summary</div>
+                <template x-if="selectedPaper.summary">
+                  <div class="md-content" x-html="renderMd(selectedPaper.summary)"></div>
+                </template>
+                <template x-if="!selectedPaper.summary">
+                  <p style="font-size:12px;color:var(--text2)">Click "Analyse" to generate AI summary.</p>
+                </template>
+              </div>
+
+              <!-- Reliability -->
+              <div class="card-sm" style="background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px" x-show="selectedPaper.reliability">
+                <div class="card-title" style="margin-bottom:8px">🛡️ Reliability</div>
+                <div class="md-content" x-html="renderMd(selectedPaper.reliability||'')"></div>
+              </div>
+
+              <!-- Annotations -->
+              <div class="card-sm" style="background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:14px">
+                <div class="card-title" style="margin-bottom:8px">💬 Team Notes</div>
+                <template x-for="ann in (selectedPaper.annotations||[])" :key="ann.id">
+                  <div class="annotation">
+                    <div class="ann-meta">
+                      <div class="dot dot-green"></div>
+                      <strong x-text="ann.user"></strong>
+                      <span x-text="ann.timestamp"></span>
+                      <button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:1px 6px;font-size:10px" @click="deleteAnnotation(ann.id)">✕</button>
+                    </div>
+                    <div class="ann-text" x-text="ann.text"></div>
+                  </div>
+                </template>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <input class="input" style="flex:1;font-size:11px;padding:6px 10px" placeholder="Add a note…" x-model="newAnnotation" @keyup.enter="addAnnotation()"/>
+                  <button class="btn btn-secondary btn-sm" @click="addAnnotation()">Add</button>
+                </div>
+              </div>
+            </div>
+          </template>
+          <template x-if="!selectedPaper">
+            <div class="empty-state" style="padding:48px 16px">
+              <div class="empty-icon">📄</div>
+              <div class="empty-title">Select a paper</div>
+              <div class="empty-sub">Click any paper to view details</div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── CHAT ─── -->
+    <div x-show="project && tab==='chat'" style="height:calc(100vh - 108px);display:flex;flex-direction:column">
+      <div class="chat-messages" x-ref="chatScroll">
+        <template x-if="(project?.chat||[]).length === 0">
+          <div class="empty-state" style="padding:64px">
+            <div class="empty-icon">💬</div>
+            <div class="empty-title">Research Assistant Ready</div>
+            <div class="empty-sub">Ask anything about your uploaded papers. The AI will cite its sources.</div>
+          </div>
+        </template>
+        <template x-for="(msg, i) in (project?.chat||[])" :key="i">
+          <div class="msg" :class="msg.type==='ai'?'msg-ai':''">
+            <div class="msg-avatar" :style="msg.type==='ai'?'background:linear-gradient(135deg,#6366f1,#a855f7)':'background:'+avatarColor(msg.user)">
+              <span x-text="msg.type==='ai'?'✦':initials(msg.user)"></span>
+            </div>
+            <div class="msg-body">
+              <div class="msg-header">
+                <span class="msg-name" x-text="msg.user"></span>
+                <span class="msg-time" x-text="msg.timestamp"></span>
+              </div>
+              <div class="msg-bubble">
+                <div class="msg-content" x-html="renderMd(msg.content)"></div>
+              </div>
+              <template x-if="msg.citations && msg.citations.length > 0">
+                <div class="citations-row">
+                  <template x-for="c in msg.citations.slice(0,4)" :key="c">
+                    <span class="cite-chip" x-text="c.length>50 ? c.slice(0,48)+'…' : c"></span>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+        <template x-if="chatLoading">
+          <div class="msg msg-ai">
+            <div class="msg-avatar" style="background:linear-gradient(135deg,#6366f1,#a855f7)">✦</div>
+            <div class="msg-body">
+              <div class="msg-header"><span class="msg-name" style="color:var(--accent2)">Nexus AI</span></div>
+              <div class="msg-bubble">
+                <div class="typing-indicator">
+                  <div class="typing-dot"></div>
+                  <div class="typing-dot"></div>
+                  <div class="typing-dot"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+      <div class="chat-input-area">
+        <div class="chat-input-row">
+          <textarea class="chat-textarea" placeholder="Ask anything about your research papers…"
+                    x-model="chatInput" @keydown.enter.prevent="if(!$event.shiftKey) sendChat()"
+                    rows="1" @input="autoResize($event)"></textarea>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="btn btn-primary btn-icon" @click="sendChat()" :disabled="!chatInput.trim() || chatLoading" title="Send (Enter)">→</button>
+            <button class="btn btn-ghost btn-icon" :class="{active: useWebSearch}" @click="useWebSearch=!useWebSearch"
+                    :title="useWebSearch?'Web search ON':'Web search OFF'"
+                    :style="useWebSearch?'border-color:var(--accent);color:var(--accent)':''">🌐</button>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text2);margin-top:6px;display:flex;gap:12px">
+          <span>Enter to send · Shift+Enter for new line</span>
+          <span x-show="useWebSearch" style="color:var(--accent2)">🌐 Web search enabled</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── INSIGHTS ─── -->
+    <div class="content" x-show="project && tab==='insights'">
+      <div class="gap-row">
+        <div class="insight-card">
+          <div class="insight-card-title" style="color:var(--green)">📊 Coverage Summary</div>
+          <div style="font-size:12px;color:var(--text1);margin-bottom:10px" x-text="Object.keys(project?.papers||{}).length + ' papers · ' + (stats.topics||0) + ' topics covered'"></div>
+          <div>
+            <template x-for="t in (stats.coverage_topics||[]).slice(0,8)" :key="t">
+              <span class="tag" x-text="t"></span>
+            </template>
+          </div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-card-title" style="color:var(--orange)">👥 Team Activity</div>
+          <template x-for="(c, name) in (project?.collaborators||{})" :key="name">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <div class="avatar" style="width:22px;height:22px;font-size:9px" :style="`background:${c.color}`" x-text="initials(name)"></div>
+              <div>
+                <div style="font-size:11px;font-weight:600" x-text="name"></div>
+                <div style="font-size:10px;color:var(--text2)" x-text="(c.papers||[]).length + ' papers uploaded'"></div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Gap Analysis -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:0">🚨 Gap Analysis</div>
+          <button class="btn btn-primary btn-sm" @click="runGapAnalysis()" :disabled="gapLoading || Object.keys(project?.papers||{}).length===0">
+            <span x-show="gapLoading" class="spinner" style="width:12px;height:12px"></span>
+            <span x-show="!gapLoading">Run Analysis</span>
+          </button>
+        </div>
+        <template x-if="gapResult">
+          <div class="md-content" x-html="renderMd(gapResult)"></div>
+        </template>
+        <template x-if="!gapResult">
+          <p style="font-size:12px;color:var(--text2)">Click "Run Analysis" to identify gaps and contradictions in your literature review.</p>
+        </template>
+      </div>
+    </div>
+
+    <!-- ─── KNOWLEDGE GRAPH ─── -->
+    <div x-show="project && tab==='graph'" style="height:calc(100vh - 108px);padding:16px;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-shrink:0">
+        <div>
+          <div style="font-size:13px;font-weight:700">Knowledge Graph</div>
+          <div style="font-size:11px;color:var(--text2)">Papers connected by shared research topics</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" @click="renderGraph()">↺ Refresh</button>
+      </div>
+      <div style="flex:1;position:relative;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg0)">
+        <div id="kg-canvas"></div>
+      </div>
+      <div class="kg-legend" style="margin-top:10px;flex-shrink:0">
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#6366f1"></div>Paper</div>
+        <div class="kg-legend-item"><div class="kg-dot" style="background:#a855f7"></div>Topic</div>
+      </div>
+    </div>
+
+    <!-- ─── DIAGRAMS ─── -->
+    <div class="content" x-show="project && tab==='visuals'">
+      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <label class="label">Paper</label>
+          <select class="input" style="width:240px" x-model="diagramHash">
+            <option value="">All papers (overview)</option>
+            <template x-for="(p, hash) in (project?.papers||{})" :key="hash">
+              <option :value="hash" x-text="(p.title||p.file_name).slice(0,45)"></option>
+            </template>
+          </select>
+        </div>
+        <div>
+          <label class="label">Diagram Type</label>
+          <select class="input" style="width:160px" x-model="diagramType">
+            <option value="flowchart">Flowchart</option>
+            <option value="mindmap">Mind Map</option>
+            <option value="timeline">Timeline</option>
+            <option value="concept">Concept Map</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" @click="generateDiagram()" :disabled="diagramLoading || Object.keys(project?.papers||{}).length===0">
+          <span x-show="diagramLoading" class="spinner" style="width:14px;height:14px"></span>
+          <span x-show="!diagramLoading">⚡ Generate Diagram</span>
+        </button>
+        <button class="btn btn-ghost" x-show="diagramCode" @click="copyDiagram()">⊞ Copy Mermaid</button>
+      </div>
+
+      <template x-if="diagramLoading">
+        <div class="mermaid-container" style="min-height:300px">
+          <div style="text-align:center;color:var(--text2)">
+            <div class="spinner" style="margin:0 auto 12px"></div>
+            <div style="font-size:12px">Generating diagram with AI…</div>
+          </div>
+        </div>
+      </template>
+
+      <template x-if="diagramCode && !diagramLoading">
+        <div>
+          <div class="mermaid-container" id="mermaid-output"></div>
+          <details style="margin-top:12px">
+            <summary style="font-size:11px;color:var(--text2);cursor:pointer;padding:6px 0">View Mermaid Source</summary>
+            <pre style="background:var(--bg0);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text1);overflow-x:auto;margin-top:8px" x-text="diagramCode"></pre>
+          </details>
+        </div>
+      </template>
+
+      <template x-if="!diagramCode && !diagramLoading">
+        <div class="empty-state" style="padding:64px">
+          <div class="empty-icon">⚡</div>
+          <div class="empty-title">Generate Visual Diagrams</div>
+          <div class="empty-sub">AI will create flowcharts, mind maps, and concept diagrams from your papers</div>
+        </div>
+      </template>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- Create Project Modal -->
+<div class="modal-overlay" x-show="showCreateProject" x-cloak @click.self="showCreateProject=false">
+  <div class="modal" @click.stop>
+    <div class="modal-header">
+      <div class="modal-title">✦ New Research Project</div>
+      <div class="modal-sub">Create a shared workspace for your team</div>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label class="label">Project Name *</label>
+        <input class="input" placeholder="e.g. Transformer Architectures Review" x-model="newProject.name"/>
+      </div>
+      <div>
+        <label class="label">Problem Statement *</label>
+        <textarea class="input textarea" placeholder="What research problem is your team trying to solve?" x-model="newProject.problem_statement"></textarea>
+      </div>
+      <div>
+        <label class="label">Your Name</label>
+        <input class="input" placeholder="e.g. Alice" x-model="newProject.created_by"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" @click="showCreateProject=false">Cancel</button>
+      <button class="btn btn-primary" @click="createProject()" :disabled="!newProject.name || !newProject.problem_statement">Create Project →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" x-show="showUpload" x-cloak @click.self="showUpload=false">
+  <div class="modal" @click.stop>
+    <div class="modal-header">
+      <div class="modal-title">↑ Upload Research Papers</div>
+      <div class="modal-sub">PDF files will be parsed, chunked, and embedded automatically</div>
+    </div>
+    <div class="modal-body">
+      <div class="upload-zone" :class="{drag: isDragging}"
+           @dragover.prevent="isDragging=true" @dragleave="isDragging=false"
+           @drop.prevent="onDrop($event); showUpload=false" @click="$refs.fileInput2.click()">
+        <input type="file" x-ref="fileInput2" accept=".pdf" multiple style="display:none" @change="onFileInput($event); showUpload=false"/>
+        <div class="upload-icon">📄</div>
+        <div class="upload-title">Drop PDFs here or click to browse</div>
+        <div class="upload-sub">Multiple files · PDF format only</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" @click="showUpload=false">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div x-show="toast.show" class="toast" :class="'toast-'+toast.type" x-text="toast.msg" x-cloak></div>
+
+<!-- ══════════ ALPINE APP ══════════ -->
+<script>
+function app() {
+  return {
+    // State
+    tab: 'dashboard',
+    projects: [],
+    activePid: '',
+    project: null,
+    stats: {},
+    username: 'researcher',
+
+    // Paper
+    selectedHash: null,
+    selectedPaper: null,
+    analysing: false,
+    newAnnotation: '',
+
+    // Chat
+    chatInput: '',
+    chatLoading: false,
+    useWebSearch: false,
+
+    // Upload
+    isDragging: false,
+    uploadQueue: [],
+    showUpload: false,
+
+    // Compare
+    compareSelected: [],
+    comparing: false,
+    compareResult: null,
+
+    // Insights
+    gapLoading: false,
+    gapResult: null,
+
+    // Diagram
+    diagramHash: '',
+    diagramType: 'flowchart',
+    diagramLoading: false,
+    diagramCode: '',
+
+    // Modals
+    showCreateProject: false,
+    newProject: { name: '', problem_statement: '', created_by: 'researcher' },
+
+    // Toast
+    toast: { show: false, msg: '', type: 'success' },
+
+    // ── INIT ──
+    async init() {
+      await this.loadProjects();
+      if (this.projects.length > 0) {
+        this.activePid = this.projects[0].id;
+        await this.onProjectChange();
+      }
+    },
+
+    async loadProjects() {
+      const r = await fetch('/api/projects');
+      this.projects = await r.json();
+    },
+
+    async onProjectChange() {
+      if (!this.activePid) { this.project = null; this.stats = {}; return; }
+      const r = await fetch(`/api/projects/${this.activePid}`);
+      this.project = await r.json();
+      this.selectedHash = null;
+      this.selectedPaper = null;
+      this.compareResult = null;
+      this.gapResult = null;
+      this.diagramCode = '';
+      await this.loadStats();
+    },
+
+    async loadStats() {
+      if (!this.activePid) return;
+      const r = await fetch(`/api/projects/${this.activePid}/stats`);
+      this.stats = await r.json();
+    },
+
+    async refreshProject() {
+      const r = await fetch(`/api/projects/${this.activePid}`);
+      this.project = await r.json();
+      if (this.selectedHash) {
+        this.selectedPaper = this.project.papers?.[this.selectedHash] || null;
+      }
+      await this.loadStats();
+    },
+
+    // ── PROJECT ──
+    async createProject() {
+      if (!this.newProject.name || !this.newProject.problem_statement) return;
+      const r = await fetch('/api/projects', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({...this.newProject, created_by: this.newProject.created_by || this.username})
+      });
+      const proj = await r.json();
+      this.showCreateProject = false;
+      this.newProject = { name: '', problem_statement: '', created_by: 'researcher' };
+      await this.loadProjects();
+      this.activePid = proj.id;
+      await this.onProjectChange();
+      this.showToast('Project created!', 'success');
+    },
+
+    // ── UPLOAD ──
+    async onDrop(e) {
+      this.isDragging = false;
+      const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.pdf'));
+      await this.uploadFiles(files);
+    },
+    async onFileInput(e) {
+      const files = Array.from(e.target.files);
+      await this.uploadFiles(files);
+      e.target.value = '';
+    },
+    async uploadFiles(files) {
+      if (!this.activePid) { this.showToast('Select a project first', 'error'); return; }
+
+      for (const file of files) {
+        const item = { name: file.name, status: 'Uploading…', pct: 20 };
+        this.uploadQueue.push(item);
+
+        try {
+          const fd = new FormData();
+          fd.append('file', file);
+          item.pct = 50; item.status = 'Processing…';
+
+          const r = await fetch(`/api/projects/${this.activePid}/papers/upload?username=${encodeURIComponent(this.username)}`, {
+            method: 'POST', body: fd
+          });
+          const result = await r.json();
+
+          item.pct = 100;
+          if (result.status === 'success') {
+            item.status = `✓ ${result.chunks} chunks`;
+            this.showToast(`"${result.title}" uploaded!`, 'success');
+          } else if (result.status === 'skipped') {
+            item.status = 'Already exists';
+          } else {
+            item.status = `Error: ${result.reason||'unknown'}`;
+            this.showToast('Upload failed: ' + (result.reason||'unknown'), 'error');
+          }
+        } catch(err) {
+          item.status = 'Network error';
+          this.showToast('Upload failed', 'error');
+        }
+      }
+
+      await this.refreshProject();
+      setTimeout(() => { this.uploadQueue = []; }, 3000);
+    },
+
+    // ── PAPER ACTIONS ──
+    async analysePaper() {
+      if (!this.selectedHash) return;
+      this.analysing = true;
+      try {
+        const r = await fetch(`/api/projects/${this.activePid}/papers/${this.selectedHash}/summarize`, { method: 'POST' });
+        const data = await r.json();
+        await this.refreshProject();
+        this.showToast('Analysis complete!', 'success');
+      } catch(e) {
+        this.showToast('Analysis failed', 'error');
+      }
+      this.analysing = false;
+    },
+
+    async deletePaper() {
+      if (!this.selectedHash || !confirm('Delete this paper?')) return;
+      await fetch(`/api/projects/${this.activePid}/papers/${this.selectedHash}`, { method: 'DELETE' });
+      this.selectedHash = null;
+      this.selectedPaper = null;
+      await this.refreshProject();
+      this.showToast('Paper deleted', 'success');
+    },
+
+    async addAnnotation() {
+      if (!this.newAnnotation.trim() || !this.selectedHash) return;
+      await fetch(`/api/projects/${this.activePid}/papers/${this.selectedHash}/annotations`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ username: this.username, text: this.newAnnotation.trim() })
+      });
+      this.newAnnotation = '';
+      await this.refreshProject();
+    },
+
+    async deleteAnnotation(annId) {
+      await fetch(`/api/projects/${this.activePid}/papers/${this.selectedHash}/annotations/${annId}`, { method: 'DELETE' });
+      await this.refreshProject();
+    },
+
+    // ── CHAT ──
+    async sendChat() {
+      const q = this.chatInput.trim();
+      if (!q || this.chatLoading) return;
+      this.chatInput = '';
+      this.chatLoading = true;
+
+      try {
+        const r = await fetch(`/api/projects/${this.activePid}/chat`, {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ message: q, username: this.username, use_web: this.useWebSearch })
+        });
+        await r.json();
+        await this.refreshProject();
+        this.$nextTick(() => {
+          const el = this.$refs.chatScroll;
+          if (el) el.scrollTop = el.scrollHeight;
+        });
+      } catch(e) {
+        this.showToast('Chat error', 'error');
+      }
+      this.chatLoading = false;
+    },
+
+    // ── INSIGHTS ──
+    async runGapAnalysis() {
+      this.gapLoading = true;
+      try {
+        const r = await fetch(`/api/projects/${this.activePid}/analyze/gaps`, { method: 'POST' });
+        const data = await r.json();
+        this.gapResult = data.analysis;
+      } catch(e) {
+        this.showToast('Analysis failed', 'error');
+      }
+      this.gapLoading = false;
+    },
+
+    async runCompare() {
+      if (this.compareSelected.length < 2) return;
+      this.comparing = true;
+      try {
+        const r = await fetch(`/api/projects/${this.activePid}/analyze/compare`, {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ doc_hashes: this.compareSelected })
+        });
+        const data = await r.json();
+        this.compareResult = data.comparison;
+        this.compareSelected = [];
+      } catch(e) {
+        this.showToast('Compare failed', 'error');
+      }
+      this.comparing = false;
+    },
+
+    // ── DIAGRAMS ──
+    async generateDiagram() {
+      this.diagramLoading = true;
+      this.diagramCode = '';
+      try {
+        const r = await fetch(`/api/projects/${this.activePid}/generate/diagram`, {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ doc_hash: this.diagramHash || null, diagram_type: this.diagramType })
+        });
+        const data = await r.json();
+        this.diagramCode = data.diagram;
+        await this.$nextTick();
+        await this.renderMermaid();
+      } catch(e) {
+        this.showToast('Diagram generation failed', 'error');
+      }
+      this.diagramLoading = false;
+    },
+
+    async renderMermaid() {
+      const el = document.getElementById('mermaid-output');
+      if (!el || !this.diagramCode || !window.mermaid) return;
+      try {
+        el.innerHTML = '';
+        const id = 'mermaid-' + Date.now();
+        const { svg } = await window.mermaid.render(id, this.diagramCode);
+        el.innerHTML = svg;
+      } catch(e) {
+        el.innerHTML = `<div style="color:var(--red);font-size:12px;padding:16px">Diagram render error: ${e.message}<br><br>Raw code:<br><pre style="margin-top:8px;font-size:10px">${this.diagramCode}</pre></div>`;
+      }
+    },
+
+    copyDiagram() {
+      navigator.clipboard.writeText(this.diagramCode);
+      this.showToast('Mermaid code copied!', 'success');
+    },
+
+    // ── GRAPH ──
+    async renderGraph() {
+      if (!this.activePid || this.tab !== 'graph') return;
+      try {
+        const r = await fetch(`/api/projects/${this.activePid}/knowledge-graph`);
+        const { nodes, edges } = await r.json();
+
+        const container = document.getElementById('kg-canvas');
+        if (!container) return;
+
+        const visNodes = new vis.DataSet(nodes.map(n => ({
+          id: n.id, label: n.label,
+          color: n.group === 'paper'
+            ? { background: '#6366f1', border: '#818cf8', highlight: { background: '#818cf8', border: '#a5b4fc' } }
+            : { background: '#2d1f47', border: '#a855f7', highlight: { background: '#a855f7', border: '#c084fc' } },
+          font: { color: '#e6edf3', size: n.group === 'paper' ? 13 : 11 },
+          shape: n.group === 'paper' ? 'box' : 'dot',
+          size: n.group === 'paper' ? 20 : 12,
+          borderWidth: 2,
+          title: n.title || n.label,
+        })));
+
+        const visEdges = new vis.DataSet(edges.map((e, i) => ({
+          id: i, from: e.from, to: e.to,
+          color: { color: '#30363d', highlight: '#6366f1' },
+          width: 1.5, smooth: { type: 'cubicBezier' }
+        })));
+
+        new vis.Network(container, { nodes: visNodes, edges: visEdges }, {
+          physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -50, springLength: 120 }, stabilization: { iterations: 150 } },
+          interaction: { hover: true, tooltipDelay: 200 },
+          layout: { improvedLayout: true }
+        });
+      } catch(e) {
+        console.error('Graph render failed:', e);
+      }
+    },
+
+    // ── HELPERS ──
+    renderMd(text) {
+      if (!text) return '';
+      return marked.parse(text);
+    },
+
+    tabLabel() {
+      const labels = { dashboard: 'Dashboard', library: 'Paper Library', chat: 'Research Chat', insights: 'Insights & Gaps', graph: 'Knowledge Graph', visuals: 'Diagram Generator' };
+      return labels[this.tab] || '';
+    },
+
+    initials(name) {
+      if (!name) return '?';
+      return name.split(' ').slice(0,2).map(w => w[0]?.toUpperCase()||'').join('');
+    },
+
+    avatarColor(name) {
+      const colors = ['#6366f1','#a855f7','#3b82f6','#22c55e','#f59e0b','#ef4444','#ec4899'];
+      let h = 0;
+      for (const c of (name||'')) h = (h * 31 + c.charCodeAt(0)) % colors.length;
+      return colors[Math.abs(h)];
+    },
+
+    autoResize(e) {
+      e.target.style.height = 'auto';
+      e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+    },
+
+    showToast(msg, type='success') {
+      this.toast = { show: true, msg, type };
+      setTimeout(() => { this.toast.show = false; }, 3000);
+    },
+  };
+}
+</script>
+</body>
+</html>

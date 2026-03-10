@@ -1,8 +1,18 @@
-streamlit>=1.36.0
+# Core
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+jinja2>=3.1.4
 python-dotenv>=1.0.1
-pypdf>=4.0.0
+pydantic>=2.0.0
 
-# LangChain + Gemini (LLM only — not used for embeddings)
+# PDF parsing
+pypdf>=4.0.0
+pdfminer.six>=20221105
+# Optional (better parsing for scanned/column PDFs — install separately if needed):
+# unstructured[pdf]>=0.14.0
+
+# LangChain stack
 langchain>=0.2.6
 langchain-core>=0.2.6
 langchain-community>=0.2.6
@@ -10,13 +20,22 @@ langchain-google-genai>=2.0.0
 langchain-text-splitters>=0.2.2
 langgraph>=0.1.0
 
-# Local embeddings — no quota, no API key needed
-sentence-transformers>=3.0.1
+# Embeddings — FastEmbed (ONNX, no PyTorch, ~40MB model download on first run)
+fastembed
 
 # Vector DB
 chromadb>=0.5.3
 
-# Google APIs (Docs/Drive export)
+# Web search — Tavily free tier (1000 searches/month, optional)
+# Get key at: app.tavily.com
+tavily-python>=0.3.3
+langchain-tavily>=0.1.0
+
+# Observability — LangSmith free dev tier (optional)
+# Set LANGCHAIN_TRACING_V2=true and LANGCHAIN_API_KEY in .env
+langsmith>=0.1.0
+
+# Google Docs export (optional)
 google-auth>=2.29.0
 google-auth-oauthlib>=1.2.0
 google-api-python-client>=2.126.0
