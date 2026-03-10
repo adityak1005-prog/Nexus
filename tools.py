@@ -10,26 +10,30 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from langchain_core.tools import tool
+import streamlit as st
 
 SCOPES = [
     "https://www.googleapis.com/auth/documents",
     "https://www.googleapis.com/auth/drive"
 ]
 
-
 def get_google_credentials():
-    """OAuth flow — opens browser on first run, caches token.json after."""
+    """Cloud-ready OAuth flow using Streamlit Secrets."""
     creds = None
-    if os.path.exists("token.json"):
+    
+    # 1. Check if we are running in the cloud and have secrets
+    if "google_token" in st.secrets:
+        token_info = dict(st.secrets["google_token"])
+        creds = Credentials.from_authorized_user_info(token_info, SCOPES)
+    
+    # 2. Fallback for local testing if token.json exists on your laptop
+    elif os.path.exists("token.json"):
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
+    
+    # 3. Refresh the token if it has expired
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+        
     return creds
 
 
