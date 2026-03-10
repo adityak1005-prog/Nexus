@@ -453,155 +453,176 @@ html, body { height: 100%; background: var(--bg0); color: var(--text0); font-fam
     </div>
 
     <!-- ─── LIBRARY ─── -->
-    <div class="content" x-show="project && tab==='library'">
-      <div class="two-panel" style="height:calc(100vh - 108px)">
-        <!-- Left: paper grid -->
-        <div class="panel-left" style="overflow-y:auto">
-          <!-- Upload zone -->
-          <div class="upload-zone" :class="{drag: isDragging}"
-               @dragover.prevent="isDragging=true" @dragleave="isDragging=false"
-               @drop.prevent="onDrop($event)" @click="$refs.fileInput.click()"
-               style="margin-bottom:16px">
-            <input type="file" x-ref="fileInput" accept=".pdf" multiple style="display:none" @change="onFileInput($event)"/>
-            <div class="upload-icon">📄</div>
-            <div class="upload-title">Drop PDF files here</div>
-            <div class="upload-sub">or click to browse · Multiple files supported</div>
-          </div>
+    <div x-show="project && tab==='library'" style="display:flex;flex-direction:column;height:calc(100vh - 108px);overflow:hidden">
 
-          <!-- Upload progress -->
-          <template x-if="uploadQueue.length > 0">
-            <div class="card" style="margin-bottom:16px">
-              <div class="card-title">Uploading <span x-text="uploadQueue.length"></span> file(s)…</div>
-              <template x-for="(item, i) in uploadQueue" :key="i">
-                <div style="margin-bottom:10px">
-                  <div style="font-size:11px;color:var(--text1);margin-bottom:4px;display:flex;justify-content:space-between">
-                    <span x-text="item.name"></span>
-                    <span x-text="item.status"></span>
-                  </div>
-                  <div class="progress-bar"><div class="progress-fill" :style="`width:${item.pct}%`"></div></div>
-                </div>
-              </template>
-            </div>
-          </template>
+      <!-- Paper grid view -->
+      <div style="flex:1;overflow-y:auto;padding:20px 24px;min-height:0" x-show="!selectedPaper">
 
-          <!-- Compare selection bar -->
-          <template x-if="compareSelected.length > 0">
-            <div class="selection-bar">
-              <span><strong x-text="compareSelected.length"></strong> papers selected for comparison</span>
-              <button class="btn btn-primary btn-sm" @click="runCompare()" :disabled="compareSelected.length < 2 || comparing">
-                <span x-show="comparing" class="spinner" style="width:12px;height:12px"></span>
-                Compare Papers
-              </button>
-              <button class="btn btn-ghost btn-sm" @click="compareSelected=[]">Clear</button>
-            </div>
-          </template>
+        <div class="upload-zone" :class="{drag: isDragging}"
+             @dragover.prevent="isDragging=true" @dragleave="isDragging=false"
+             @drop.prevent="onDrop($event)" @click="$refs.fileInput.click()"
+             style="margin-bottom:16px">
+          <input type="file" x-ref="fileInput" accept=".pdf" multiple style="display:none" @change="onFileInput($event)"/>
+          <div class="upload-icon">📄</div>
+          <div class="upload-title">Drop PDF files here</div>
+          <div class="upload-sub">or click to browse · Multiple files supported</div>
+        </div>
 
-          <div class="paper-grid">
-            <template x-for="(p, hash) in (project?.papers||{})" :key="hash">
-              <div class="paper-card" :class="{selected: selectedHash===hash}"
-                   @click="selectedHash=hash; selectedPaper=p">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-                  <span class="badge" :class="'badge-'+p.status" x-text="p.status"></span>
-                  <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;color:var(--text2)" @click.stop>
-                    <input type="checkbox" :value="hash" x-model="compareSelected" style="cursor:pointer"/>
-                    Compare
-                  </label>
+        <template x-if="uploadQueue.length > 0">
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Uploading <span x-text="uploadQueue.length"></span> file(s)…</div>
+            <template x-for="(item, i) in uploadQueue" :key="i">
+              <div style="margin-bottom:10px">
+                <div style="font-size:11px;color:var(--text1);margin-bottom:4px;display:flex;justify-content:space-between">
+                  <span x-text="item.name"></span><span x-text="item.status"></span>
                 </div>
-                <div class="pc-title" x-text="p.title||p.file_name"></div>
-                <div class="pc-author" x-text="p.author!='Unknown' ? p.author : ''"></div>
-                <div class="pc-tags">
-                  <template x-for="t in (p.subtopics||[]).slice(0,3)" :key="t">
-                    <span class="tag" x-text="t"></span>
-                  </template>
-                </div>
-                <div class="pc-footer">
-                  <span class="pc-meta" x-text="(p.num_pages||0)+'p · '+(p.uploaded_by||'') + ' · '+(p.uploaded_at||'').slice(0,10)"></span>
-                </div>
+                <div class="progress-bar"><div class="progress-fill" :style="`width:${item.pct}%`"></div></div>
               </div>
             </template>
           </div>
+        </template>
 
-          <!-- Compare result -->
-          <template x-if="compareResult">
-            <div class="card" style="margin-top:20px">
-              <div class="card-title" style="margin-bottom:12px">⚔️ Comparison Results</div>
-              <div class="md-content" x-html="renderMd(compareResult)"></div>
+        <template x-if="compareSelected.length > 0">
+          <div class="selection-bar">
+            <span><strong x-text="compareSelected.length"></strong> papers selected</span>
+            <button class="btn btn-primary btn-sm" @click="runCompare()" :disabled="compareSelected.length < 2 || comparing">
+              <span x-show="comparing" class="spinner" style="width:12px;height:12px"></span>
+              Compare Papers
+            </button>
+            <button class="btn btn-ghost btn-sm" @click="compareSelected=[]">Clear</button>
+          </div>
+        </template>
+
+        <div class="paper-grid">
+          <template x-for="(p, hash) in (project?.papers||{})" :key="hash">
+            <div class="paper-card" :class="{selected: selectedHash===hash}"
+                 @click="selectedHash=hash; selectedPaper=p">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+                <span class="badge" :class="'badge-'+p.status" x-text="p.status"></span>
+                <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;color:var(--text2)" @click.stop>
+                  <input type="checkbox" :value="hash" x-model="compareSelected" style="cursor:pointer"/> Compare
+                </label>
+              </div>
+              <div class="pc-title" x-text="p.title||p.file_name"></div>
+              <div class="pc-author" x-text="p.author!='Unknown' ? p.author : ''"></div>
+              <div class="pc-tags">
+                <template x-for="t in (p.subtopics||[]).slice(0,3)" :key="t">
+                  <span class="tag" x-text="t"></span>
+                </template>
+              </div>
+              <div class="pc-footer">
+                <span class="pc-meta" x-text="(p.num_pages||0)+'p · '+(p.uploaded_by||'')+' · '+(p.uploaded_at||'').slice(0,10)"></span>
+              </div>
             </div>
           </template>
         </div>
 
-        <!-- Right: paper detail -->
-        <div class="panel-right" style="overflow-y:auto">
-          <template x-if="selectedPaper">
-            <div>
-              <div class="card" style="margin-bottom:12px">
-                <div style="font-size:14px;font-weight:700;line-height:1.4;margin-bottom:6px" x-text="selectedPaper.title||selectedPaper.file_name"></div>
-                <div style="font-size:11px;color:var(--text2);margin-bottom:10px" x-text="selectedPaper.author + ' · ' + (selectedPaper.num_pages||0) + ' pages'"></div>
-                <span class="badge" :class="'badge-'+(selectedPaper.status||'pending')" x-text="selectedPaper.status||'pending'"></span>
-                <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-                  <button class="btn btn-primary btn-sm" @click="analysePaper()"
-                          :disabled="analysing || selectedPaper.status==='summarized'">
-                    <span x-show="analysing" class="spinner" style="width:12px;height:12px"></span>
-                    <span x-show="!analysing" x-text="selectedPaper.status==='summarized'?'✓ Analysed':'✦ Analyse'"></span>
-                  </button>
-                  <button class="btn btn-ghost btn-sm" @click="analysePaper()" x-show="selectedPaper.status==='summarized'">↺ Re-run</button>
-                  <button class="btn btn-danger btn-sm" @click="deletePaper()">✕ Delete</button>
-                </div>
-              </div>
+        <template x-if="compareResult">
+          <div class="card" style="margin-top:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <div class="card-title" style="margin-bottom:0">⚔️ Comparison Results</div>
+              <button class="btn btn-ghost btn-sm" @click="compareResult=null">✕ Close</button>
+            </div>
+            <div class="md-content" x-html="renderMd(compareResult)"></div>
+          </div>
+        </template>
+      </div>
 
-              <!-- Topics -->
-              <div class="card-sm" style="background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px" x-show="(selectedPaper.subtopics||[]).length > 0">
-                <div class="card-title" style="margin-bottom:8px">🏷️ Key Topics</div>
-                <template x-for="t in (selectedPaper.subtopics||[])" :key="t">
-                  <span class="tag" x-text="t"></span>
-                </template>
-              </div>
+      <!-- Full-width paper detail -->
+      <div x-show="selectedPaper" style="flex:1;overflow-y:auto;min-height:0">
 
-              <!-- Summary -->
-              <div class="card-sm" style="background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px">
-                <div class="card-title" style="margin-bottom:8px">📌 AI Summary</div>
-                <template x-if="selectedPaper.summary">
-                  <div class="md-content" x-html="renderMd(selectedPaper.summary)"></div>
-                </template>
-                <template x-if="!selectedPaper.summary">
-                  <p style="font-size:12px;color:var(--text2)">Click "Analyse" to generate AI summary.</p>
-                </template>
-              </div>
+        <!-- Sticky header bar -->
+        <div style="position:sticky;top:0;z-index:10;background:var(--bg1);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px">
+          <button class="btn btn-ghost btn-sm" @click="selectedPaper=null;selectedHash=null">← Back</button>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" x-text="selectedPaper?.title||selectedPaper?.file_name"></div>
+            <div style="font-size:11px;color:var(--text2)" x-text="(selectedPaper?.author&&selectedPaper?.author!='Unknown'?selectedPaper.author+' · ':'')+((selectedPaper?.num_pages||0)+' pages')"></div>
+          </div>
+          <span class="badge" :class="'badge-'+(selectedPaper?.status||'pending')" x-text="selectedPaper?.status||'pending'"></span>
+          <button class="btn btn-primary btn-sm" @click="analysePaper()" :disabled="analysing || selectedPaper?.status==='summarized'">
+            <span x-show="analysing" class="spinner" style="width:12px;height:12px"></span>
+            <span x-show="!analysing" x-text="selectedPaper?.status==='summarized'?'✓ Analysed':'✦ Analyse Paper'"></span>
+          </button>
+          <button class="btn btn-ghost btn-sm" @click="analysePaper()" x-show="selectedPaper?.status==='summarized'" title="Re-run">↺</button>
+          <button class="btn btn-danger btn-sm" @click="deletePaper()">✕ Delete</button>
+        </div>
 
-              <!-- Reliability -->
-              <div class="card-sm" style="background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px" x-show="selectedPaper.reliability">
-                <div class="card-title" style="margin-bottom:8px">🛡️ Reliability</div>
-                <div class="md-content" x-html="renderMd(selectedPaper.reliability||'')"></div>
-              </div>
+        <!-- 3-column body -->
+        <div style="padding:24px;display:grid;grid-template-columns:1fr 1fr 300px;gap:20px;align-items:start">
 
-              <!-- Annotations -->
-              <div class="card-sm" style="background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:14px">
-                <div class="card-title" style="margin-bottom:8px">💬 Team Notes</div>
-                <template x-for="ann in (selectedPaper.annotations||[])" :key="ann.id">
-                  <div class="annotation">
-                    <div class="ann-meta">
-                      <div class="dot dot-green"></div>
-                      <strong x-text="ann.user"></strong>
-                      <span x-text="ann.timestamp"></span>
-                      <button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:1px 6px;font-size:10px" @click="deleteAnnotation(ann.id)">✕</button>
-                    </div>
-                    <div class="ann-text" x-text="ann.text"></div>
+          <!-- Col 1: AI Summary -->
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent2);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px">
+              📌 AI Summary
+            </div>
+            <template x-if="selectedPaper?.summary">
+              <div class="md-content" x-html="renderMd(selectedPaper.summary)"></div>
+            </template>
+            <template x-if="!selectedPaper?.summary">
+              <div style="background:var(--bg2);border:2px dashed var(--border2);border-radius:10px;padding:40px 24px;text-align:center;color:var(--text2)">
+                <div style="font-size:32px;margin-bottom:12px">🤖</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:6px">No analysis yet</div>
+                <div style="font-size:12px">Click "✦ Analyse Paper" above to generate a full AI breakdown including methods, findings, and relevance score.</div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Col 2: Reliability -->
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent2);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)">
+              🛡️ Reliability Assessment
+            </div>
+            <template x-if="selectedPaper?.reliability">
+              <div class="md-content" x-html="renderMd(selectedPaper.reliability)"></div>
+            </template>
+            <template x-if="!selectedPaper?.reliability">
+              <div style="background:var(--bg2);border:2px dashed var(--border2);border-radius:10px;padding:40px 24px;text-align:center;color:var(--text2)">
+                <div style="font-size:32px;margin-bottom:12px">🛡️</div>
+                <div style="font-size:12px">Reliability check generated alongside the AI summary.</div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Col 3: Sidebar info -->
+          <div style="display:flex;flex-direction:column;gap:14px">
+
+            <div class="card-sm" x-show="(selectedPaper?.subtopics||[]).length > 0">
+              <div class="card-title" style="margin-bottom:10px">🏷️ Research Topics</div>
+              <template x-for="t in (selectedPaper?.subtopics||[])" :key="t">
+                <span class="tag" x-text="t"></span>
+              </template>
+            </div>
+
+            <div class="card-sm">
+              <div class="card-title" style="margin-bottom:10px">📋 Metadata</div>
+              <div style="display:flex;flex-direction:column;gap:7px;font-size:12px">
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Uploaded by</span><span style="color:var(--text0);font-weight:600" x-text="selectedPaper?.uploaded_by||'—'"></span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Pages</span><span style="color:var(--text0);font-weight:600" x-text="selectedPaper?.num_pages||0"></span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Date</span><span style="color:var(--text0);font-weight:600" x-text="(selectedPaper?.uploaded_at||'').slice(0,10)"></span></div>
+              </div>
+            </div>
+
+            <div class="card-sm">
+              <div class="card-title" style="margin-bottom:10px">
+                💬 Team Notes
+                <span style="font-weight:400;color:var(--text2);font-size:10px" x-text="'('+((selectedPaper?.annotations||[]).length)+')'"></span>
+              </div>
+              <template x-for="ann in (selectedPaper?.annotations||[])" :key="ann.id">
+                <div class="annotation">
+                  <div class="ann-meta">
+                    <div class="avatar" style="width:18px;height:18px;font-size:8px;border:none" :style="`background:${avatarColor(ann.user)}`" x-text="initials(ann.user)"></div>
+                    <strong x-text="ann.user"></strong><span x-text="ann.timestamp"></span>
+                    <button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:1px 5px;font-size:9px" @click="deleteAnnotation(ann.id)">✕</button>
                   </div>
-                </template>
-                <div style="display:flex;gap:8px;margin-top:8px">
-                  <input class="input" style="flex:1;font-size:11px;padding:6px 10px" placeholder="Add a note…" x-model="newAnnotation" @keyup.enter="addAnnotation()"/>
-                  <button class="btn btn-secondary btn-sm" @click="addAnnotation()">Add</button>
+                  <div class="ann-text" x-text="ann.text"></div>
                 </div>
+              </template>
+              <div style="display:flex;gap:8px;margin-top:10px">
+                <input class="input" style="flex:1;font-size:11px;padding:7px 10px" placeholder="Add a note…" x-model="newAnnotation" @keyup.enter="addAnnotation()"/>
+                <button class="btn btn-secondary btn-sm" @click="addAnnotation()">Add</button>
               </div>
             </div>
-          </template>
-          <template x-if="!selectedPaper">
-            <div class="empty-state" style="padding:48px 16px">
-              <div class="empty-icon">📄</div>
-              <div class="empty-title">Select a paper</div>
-              <div class="empty-sub">Click any paper to view details</div>
-            </div>
-          </template>
+          </div>
         </div>
       </div>
     </div>
