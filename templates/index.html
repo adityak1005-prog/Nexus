@@ -5,655 +5,1260 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Nexus — Research Intelligence Platform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
   window.mermaid = mermaid;
-  mermaid.initialize({ startOnLoad: false, theme: 'dark', darkMode: true,
-    themeVariables: { darkMode: true, background: '#0d1117', primaryColor: '#6366f1',
-      primaryTextColor: '#e6edf3', edgeLabelBackground: '#161b22', lineColor: '#6366f1' }});
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    themeVariables: {
+      darkMode: true,
+      background: '#0d1117',
+      primaryColor: '#1d4ed8',
+      primaryTextColor: '#f0f6fc',
+      primaryBorderColor: '#1e40af',
+      lineColor: '#3b82f6',
+      secondaryColor: '#161b22',
+      tertiaryColor: '#21262d',
+      fontFamily: 'JetBrains Mono, monospace',
+      fontSize: '12px',
+    }
+  });
 </script>
 <style>
+/* ==========================================================================
+   DESIGN TOKENS
+   ========================================================================== */
 :root {
-  --bg0: #0d1117; --bg1: #161b22; --bg2: #1c2333; --bg3: #21262d;
-  --border: #30363d; --border2: #3d444d;
-  --accent: #6366f1; --accent2: #818cf8; --accent-glow: rgba(99,102,241,.15);
-  --blue: #3b82f6; --green: #22c55e; --red: #ef4444; --orange: #f59e0b; --purple: #a855f7;
-  --text0: #e6edf3; --text1: #9198a1; --text2: #545d68;
+  /* Surfaces */
+  --bg0:   #0d1117;
+  --bg1:   #161b22;
+  --bg2:   #1c2128;
+  --bg3:   #21262d;
+  --bg4:   #2d333b;
+
+  /* Borders */
+  --border:  #30363d;
+  --border2: #444c56;
+
+  /* Brand */
+  --blue:     #2563eb;
+  --blue2:    #3b82f6;
+  --blue3:    #93c5fd;
+  --blue-bg:  rgba(37,99,235,.1);
+  --blue-bg2: rgba(37,99,235,.18);
+
+  /* Semantic */
+  --green:  #22c55e;
+  --red:    #ef4444;
+  --orange: #f59e0b;
+  --purple: #a855f7;
+
+  /* Text */
+  --t0: #f0f6fc;
+  --t1: #8b949e;
+  --t2: #484f58;
+
+  /* Typography */
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Geometry */
+  --radius: 6px;
+  --radius-lg: 10px;
 }
+
+/* ==========================================================================
+   RESET & BASE
+   ========================================================================== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; background: var(--bg0); color: var(--text0); font-family: 'Inter', sans-serif; font-size: 14px; overflow: hidden; }
-::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
-/* ── LAYOUT ── */
-.shell { display: flex; height: 100vh; }
-.sidebar { width: 260px; min-width: 260px; background: var(--bg1); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg0);
+  color: var(--t0);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-/* ── SIDEBAR ── */
-.brand { padding: 20px 18px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.brand-logo { display: flex; align-items: center; gap: 10px; }
-.brand-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--purple)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-.brand-name { font-size: 15px; font-weight: 800; letter-spacing: -.5px; }
-.brand-tag { font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: .12em; margin-top: 1px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border2); }
 
-.project-selector { padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.project-label { font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: .1em; font-weight: 600; margin-bottom: 6px; }
-.project-select { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; color: var(--text0); font-size: 12px; font-family: inherit; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239198a1' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
-.project-select:focus { outline: none; border-color: var(--accent); }
-.btn-new-project { width: 100%; margin-top: 8px; background: var(--accent-glow); border: 1px dashed rgba(99,102,241,.4); border-radius: 7px; padding: 7px; color: var(--accent2); font-size: 11px; font-family: inherit; cursor: pointer; transition: all .15s; }
-.btn-new-project:hover { background: rgba(99,102,241,.25); border-color: var(--accent); }
+[x-cloak] { display: none !important; }
+a { color: inherit; text-decoration: none; }
 
-.sb-section { padding: 10px 14px 4px; font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: .12em; font-weight: 700; flex-shrink: 0; }
+/* ==========================================================================
+   LAYOUT SKELETON
+   The entire app lives inside .shell. Nothing overflows it.
+   ========================================================================== */
+.shell { display: flex; height: 100vh; overflow: hidden; }
 
-.nav-list { list-style: none; padding: 4px 8px; flex-shrink: 0; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text1); transition: all .15s; margin-bottom: 2px; }
-.nav-item:hover { background: var(--bg2); color: var(--text0); }
-.nav-item.active { background: var(--accent-glow); color: var(--accent2); border: 1px solid rgba(99,102,241,.25); }
-.nav-icon { font-size: 14px; width: 18px; text-align: center; }
-.nav-badge { margin-left: auto; background: var(--accent); color: #fff; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+/* ==========================================================================
+   SIDEBAR
+   ========================================================================== */
+.sidebar {
+  width: 252px;
+  min-width: 252px;
+  background: var(--bg1);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-.team-section { padding: 10px 14px; border-top: 1px solid var(--border); flex-shrink: 0; }
-.team-avatars { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-.avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; border: 2px solid var(--bg1); position: relative; cursor: default; }
-.avatar-online::after { content: ''; position: absolute; bottom: -1px; right: -1px; width: 8px; height: 8px; background: var(--green); border-radius: 50%; border: 1.5px solid var(--bg1); }
+/* Brand */
+.brand {
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.brand-logo {
+  width: 26px; height: 26px; flex-shrink: 0;
+  background: var(--blue);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+  font-family: var(--sans);
+  letter-spacing: -.5px;
+}
+.brand-wordmark { font-size: 14px; font-weight: 600; color: var(--t0); letter-spacing: -.2px; }
+.brand-version { font-family: var(--mono); font-size: 9px; color: var(--t2); margin-top: 1px; }
 
-.paper-list { flex: 1; overflow-y: auto; padding: 4px 8px 12px; }
-.paper-item { padding: 10px 10px; border-radius: 7px; cursor: pointer; margin-bottom: 3px; border: 1px solid transparent; transition: all .15s; }
-.paper-item:hover { background: var(--bg2); }
-.paper-item.active { background: var(--bg2); border-color: rgba(99,102,241,.4); }
-.paper-item-title { font-size: 11.5px; font-weight: 600; color: var(--text0); line-height: 1.4; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.paper-item-meta { font-size: 10px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
-.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.dot-green { background: var(--green); } .dot-orange { background: var(--orange); } .dot-gray { background: var(--text2); }
+/* Project selector */
+.proj-header {
+  padding: 12px 14px 8px;
+  flex-shrink: 0;
+}
+.proj-label { font-size: 10px; font-weight: 600; color: var(--t2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.proj-select {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 7px 28px 7px 10px;
+  color: var(--t0); font-family: var(--sans); font-size: 12px; font-weight: 500;
+  cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23484f58' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 9px center;
+  transition: border-color .15s;
+}
+.proj-select:focus { outline: none; border-color: var(--blue); }
+.btn-new-proj {
+  width: 100%; margin-top: 6px;
+  padding: 6px 10px; background: transparent;
+  border: 1px dashed var(--border); border-radius: var(--radius);
+  color: var(--t2); font-size: 11px; font-family: var(--sans);
+  cursor: pointer; transition: all .15s; text-align: left;
+}
+.btn-new-proj:hover { border-color: var(--blue); color: var(--blue2); background: var(--blue-bg); }
 
-/* ── MAIN HEADER ── */
-.topbar { padding: 0 24px; background: var(--bg1); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; height: 52px; flex-shrink: 0; }
-.topbar-title { font-size: 13px; font-weight: 700; color: var(--text0); }
-.topbar-sub { font-size: 11px; color: var(--text2); }
-.topbar-sep { color: var(--border2); }
+/* Navigation */
+.nav-section {
+  padding: 14px 14px 4px;
+  font-size: 10px; font-weight: 600; color: var(--t2);
+  text-transform: uppercase; letter-spacing: .07em;
+  flex-shrink: 0;
+}
+.nav-items { padding: 0 6px; flex-shrink: 0; }
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 10px; border-radius: var(--radius);
+  cursor: pointer; font-size: 13px; font-weight: 500;
+  color: var(--t1); transition: all .12s; margin-bottom: 1px;
+}
+.nav-item:hover { background: var(--bg2); color: var(--t0); }
+.nav-item.active { background: var(--blue-bg2); color: var(--blue2); }
+.nav-item .ico { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; opacity: .8; }
+.nav-item.active .ico { opacity: 1; }
+.nav-badge {
+  margin-left: auto;
+  font-family: var(--mono); font-size: 10px;
+  background: var(--bg3); color: var(--t2);
+  padding: 1px 5px; border-radius: 3px;
+}
+.nav-item.active .nav-badge { background: var(--blue); color: #fff; }
+
+/* Paper list in sidebar */
+.sb-papers {
+  flex: 1; min-height: 0;
+  overflow-y: auto;
+  padding: 4px 6px 12px;
+}
+.sb-paper-item {
+  padding: 8px 10px; border-radius: var(--radius);
+  cursor: pointer; margin-bottom: 1px;
+  transition: background .1s;
+}
+.sb-paper-item:hover { background: var(--bg2); }
+.sb-paper-item.active { background: var(--bg2); }
+.sb-paper-title { font-size: 11.5px; font-weight: 500; color: var(--t0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+.sb-paper-meta { display: flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 9px; color: var(--t2); }
+.status-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+/* Sidebar footer */
+.sb-footer {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.avatar-stack { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: #fff;
+  border: 2px solid var(--bg1);
+}
+
+/* ==========================================================================
+   MAIN AREA
+   ========================================================================== */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Topbar */
+.topbar {
+  height: 56px;
+  padding: 0 20px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 0 var(--border);
+}
+.topbar-crumb { font-size: 13px; font-weight: 500; color: var(--t0); }
+.topbar-sep { color: var(--t2); font-size: 12px; }
+.topbar-sub { font-size: 12px; color: var(--t1); }
 .topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 
-.tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg1); padding: 0 24px; flex-shrink: 0; gap: 2px; }
-.tab { padding: 12px 14px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-.tab:hover { color: var(--text1); }
-.tab.active { color: var(--text0); border-bottom-color: var(--accent); }
-.tab-count { background: var(--bg3); color: var(--text2); font-size: 9px; padding: 1px 5px; border-radius: 5px; }
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  gap: 2px;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.tab-bar::-webkit-scrollbar { height: 0; }
+.tab-item {
+  padding: 0 14px;
+  height: 38px;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 500;
+  color: var(--t1); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all .12s;
+  white-space: nowrap;
+  border: none; background: none;
+}
+.tab-item:hover { color: var(--t0); }
+.tab-item.active { color: var(--t0); border-bottom-color: var(--blue2); }
+.tab-count {
+  font-family: var(--mono); font-size: 10px;
+  background: var(--bg3); color: var(--t2);
+  padding: 0 5px; border-radius: 3px;
+}
+.tab-item.active .tab-count { background: var(--blue); color: #fff; }
 
-/* ── CONTENT ── */
-.content { flex: 1; overflow-y: auto; padding: 24px; }
+/* ==========================================================================
+   PANEL SYSTEM — DEFINITIVE SCROLL ARCHITECTURE
+   
+   .panels → position:relative, fills remaining flex space via flex:1;min-height:0
+   Every panel → position:absolute;inset:0
+   
+   Type A: simple scroll → add overflow-y:auto
+   Type B: flex column layout → display:flex;flex-direction:column;overflow:hidden
+             children: header flex-shrink:0 + body flex:1;min-height:0;overflow:hidden
+   
+   For multi-column layouts inside a panel:
+   Use FLEX ROW (not CSS grid) because flex items respect min-width:0 and min-height:0
+   reliably when combined with overflow:auto. CSS grid items have min-height/width:auto
+   by default, requiring extra overrides that can fail in nested flex/grid contexts.
+   ========================================================================== */
+.panels { flex: 1; position: relative; overflow: hidden; min-height: 0; }
 
-/* ── CARDS ── */
-.card { background: var(--bg1); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
-.card-sm { background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
-.card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text2); margin-bottom: 10px; }
+.panel { position: absolute; inset: 0; }
 
-/* ── STAT CARDS ── */
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-.stat-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
-.stat-icon { font-size: 18px; margin-bottom: 8px; }
-.stat-val { font-size: 28px; font-weight: 800; letter-spacing: -1px; color: var(--text0); line-height: 1; }
-.stat-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
-.stat-sub { font-size: 10px; color: var(--green); margin-top: 2px; font-weight: 500; }
+/* Scrollable panel */
+.panel-scroll { position: absolute; inset: 0; overflow-y: auto; }
 
-/* ── BUTTONS ── */
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all .15s; border: none; }
-.btn-primary { background: var(--accent); color: #fff; } .btn-primary:hover { background: #5254c9; }
-.btn-secondary { background: var(--bg2); border: 1px solid var(--border); color: var(--text0); } .btn-secondary:hover { border-color: var(--border2); background: var(--bg3); }
-.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text1); } .btn-ghost:hover { border-color: var(--border2); color: var(--text0); }
-.btn-danger { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); color: var(--red); } .btn-danger:hover { background: rgba(239,68,68,.2); }
-.btn-sm { padding: 5px 10px; font-size: 11px; }
-.btn-icon { width: 32px; height: 32px; padding: 0; justify-content: center; }
-.btn:disabled { opacity: .5; cursor: not-allowed; }
+/* Flex column panel — use for anything with a header + scrollable body */
+.panel-col { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
 
-/* ── BADGES ── */
-.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
-.badge-summarized { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
-.badge-processing { background: rgba(245,158,11,.12); color: var(--orange); border: 1px solid rgba(245,158,11,.25); }
-.badge-pending { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
-.badge-high { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
-.badge-medium { background: rgba(245,158,11,.12); color: var(--orange); border: 1px solid rgba(245,158,11,.25); }
-.badge-low { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.25); }
+/* ==========================================================================
+   COMPONENTS
+   ========================================================================== */
 
-/* ── TAGS ── */
-.tag { display: inline-block; font-size: 9.5px; font-family: 'JetBrains Mono', monospace; background: rgba(99,102,241,.12); color: var(--accent2); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(99,102,241,.2); margin: 2px; }
+/* --- Buttons --- */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: var(--radius);
+  font-family: var(--sans); font-size: 12px; font-weight: 500;
+  cursor: pointer; border: 1px solid transparent;
+  transition: all .12s; white-space: nowrap;
+}
+.btn-primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+.btn-primary:hover { background: var(--blue2); border-color: var(--blue2); }
+.btn-secondary { background: var(--bg2); color: var(--t0); border-color: var(--border); }
+.btn-secondary:hover { background: var(--bg3); border-color: var(--border2); }
+.btn-ghost { background: transparent; color: var(--t1); border-color: var(--border); }
+.btn-ghost:hover { background: var(--bg2); color: var(--t0); border-color: var(--border2); }
+.btn-danger { background: rgba(239,68,68,.08); color: var(--red); border-color: rgba(239,68,68,.2); }
+.btn-danger:hover { background: rgba(239,68,68,.15); }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.btn-xs { padding: 3px 8px; font-size: 10px; }
+.btn-icon { width: 30px; height: 30px; padding: 0; justify-content: center; }
+.btn:disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
 
-/* ── INPUTS ── */
-.input { background: var(--bg2); border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; color: var(--text0); font-family: inherit; font-size: 13px; width: 100%; transition: border-color .15s; }
-.input:focus { outline: none; border-color: var(--accent); }
-.input::placeholder { color: var(--text2); }
+/* --- Status badges --- */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 4px;
+  font-size: 10px; font-weight: 600; font-family: var(--mono);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.badge-summarized { background: rgba(34,197,94,.1); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+.badge-pending { background: var(--bg3); color: var(--t2); border: 1px solid var(--border); }
+.badge-processing { background: rgba(245,158,11,.1); color: var(--orange); border: 1px solid rgba(245,158,11,.25); }
+
+/* --- Tags --- */
+.tag {
+  display: inline-block;
+  padding: 2px 8px; border-radius: 4px;
+  font-family: var(--mono); font-size: 10px;
+  background: var(--blue-bg2); color: var(--blue3);
+  border: 1px solid rgba(37,99,235,.2);
+  margin: 2px;
+}
+
+/* --- Form elements --- */
+.input {
+  width: 100%;
+  padding: 8px 11px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--t0);
+  font-family: var(--sans); font-size: 13px;
+  transition: border-color .15s;
+}
+.input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+.input::placeholder { color: var(--t2); }
+.input-mono { font-family: var(--mono); font-size: 12px; }
 .textarea { resize: vertical; min-height: 80px; }
-.label { font-size: 11px; font-weight: 600; color: var(--text1); margin-bottom: 6px; display: block; }
+.label { display: block; font-size: 11px; font-weight: 600; color: var(--t1); margin-bottom: 5px; }
 
-/* ── UPLOAD ZONE ── */
-.upload-zone { border: 2px dashed var(--border2); border-radius: 10px; padding: 36px 24px; text-align: center; cursor: pointer; transition: all .2s; }
-.upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--accent-glow); }
-.upload-icon { font-size: 32px; margin-bottom: 12px; }
-.upload-title { font-size: 14px; font-weight: 600; color: var(--text0); margin-bottom: 6px; }
-.upload-sub { font-size: 12px; color: var(--text2); }
+/* --- Cards --- */
+.card { background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; }
+.card-sm { background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.card-title { font-size: 11px; font-weight: 600; color: var(--t2); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px; }
 
-/* ── CHAT ── */
-.chat-container { display: flex; flex-direction: column; height: 100%; }
-.chat-messages { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
-.msg { display: flex; gap: 12px; animation: fadeUp .25s ease; }
-@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-.msg-avatar { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; }
-.msg-body { flex: 1; min-width: 0; }
-.msg-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; }
-.msg-name { font-size: 12px; font-weight: 700; color: var(--text0); }
-.msg-time { font-size: 10px; color: var(--text2); }
-.msg-ai .msg-name { color: var(--accent2); }
-.msg-content { font-size: 13px; color: var(--text1); line-height: 1.7; }
-.msg-content code { font-family: 'JetBrains Mono', monospace; background: var(--bg3); padding: 1px 5px; border-radius: 3px; font-size: 11.5px; color: var(--accent2); }
-.msg-content pre { background: var(--bg0); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 8px 0; overflow-x: auto; }
-.msg-content h2, .msg-content h3 { font-size: 13px; font-weight: 700; margin: 12px 0 6px; color: var(--text0); }
-.msg-content ul, .msg-content ol { padding-left: 18px; margin: 6px 0; }
-.msg-content li { margin-bottom: 3px; }
-.msg-bubble { background: var(--bg2); border: 1px solid var(--border); border-radius: 0 10px 10px 10px; padding: 12px 16px; }
-.msg-ai .msg-bubble { background: var(--bg1); border-color: rgba(99,102,241,.2); }
-.citations-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-.cite-chip { font-size: 10px; background: var(--accent-glow); color: var(--accent2); border: 1px solid rgba(99,102,241,.3); padding: 2px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
-.chat-input-area { padding: 16px 24px; border-top: 1px solid var(--border); background: var(--bg1); }
-.chat-input-row { display: flex; gap: 10px; align-items: flex-end; }
-.chat-textarea { flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text0); font-family: inherit; font-size: 13px; resize: none; min-height: 44px; max-height: 120px; transition: border-color .15s; }
-.chat-textarea:focus { outline: none; border-color: var(--accent); }
-.typing-indicator { display: flex; gap: 4px; padding: 12px 16px; align-items: center; }
-.typing-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: bounce .8s infinite; }
-.typing-dot:nth-child(2) { animation-delay: .15s; } .typing-dot:nth-child(3) { animation-delay: .3s; }
-@keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+/* --- Stat cards --- */
+.stat-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 20px;
+}
+.stat-value { font-size: 28px; font-weight: 700; letter-spacing: -1px; color: var(--t0); line-height: 1.1; margin: 6px 0 3px; }
+.stat-label { font-size: 11px; color: var(--t1); }
+.stat-icon { font-size: 16px; }
 
-/* ── PAPER GRID ── */
-.paper-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
-.paper-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 10px; padding: 16px; transition: all .2s; cursor: pointer; }
-.paper-card:hover { border-color: rgba(99,102,241,.4); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,.3); }
-.paper-card.selected { border-color: var(--accent); background: rgba(99,102,241,.05); }
-.pc-title { font-size: 13px; font-weight: 600; line-height: 1.4; margin-bottom: 8px; color: var(--text0); }
-.pc-author { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
-.pc-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
-.pc-footer { display: flex; align-items: center; justify-content: space-between; }
-.pc-meta { font-size: 10px; color: var(--text2); }
+/* --- Divider --- */
+.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 
-/* ── KNOWLEDGE GRAPH ── */
-#kg-canvas { width: 100%; height: 100%; border-radius: 10px; }
-.kg-legend { display: flex; gap: 16px; margin-top: 10px; }
-.kg-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text1); }
-.kg-dot { width: 10px; height: 10px; border-radius: 50%; }
+/* --- Progress bar --- */
+.progress { height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg,var(--blue),var(--blue2)); border-radius: 2px; transition: width .3s; }
 
-/* ── MERMAID ── */
-.mermaid-container { background: var(--bg0); border: 1px solid var(--border); border-radius: 10px; padding: 24px; min-height: 200px; display: flex; align-items: center; justify-content: center; overflow: auto; }
-.mermaid-container svg { max-width: 100%; }
-
-/* ── MARKDOWN CONTENT ── */
-.md-content { font-size: 13px; color: var(--text1); line-height: 1.75; }
-.md-content h2 { font-size: 14px; font-weight: 700; color: var(--text0); margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
-.md-content h3 { font-size: 13px; font-weight: 600; color: var(--text0); margin: 14px 0 6px; }
-.md-content ul { padding-left: 18px; margin: 6px 0; }
-.md-content li { margin-bottom: 4px; }
-.md-content strong { color: var(--text0); font-weight: 600; }
-.md-content code { font-family: 'JetBrains Mono', monospace; background: var(--bg3); padding: 1px 5px; border-radius: 3px; font-size: 11.5px; color: var(--accent2); }
-
-/* ── MODAL ── */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn .2s ease; }
-@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-.modal { background: var(--bg1); border: 1px solid var(--border2); border-radius: 14px; width: 480px; max-width: 90vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 24px 80px rgba(0,0,0,.5); }
-.modal-header { padding: 20px 22px 14px; border-bottom: 1px solid var(--border); }
-.modal-title { font-size: 15px; font-weight: 700; }
-.modal-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
-.modal-body { padding: 18px 22px; }
-.modal-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
-
-/* ── PROGRESS ── */
-.progress-bar { height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--purple)); border-radius: 2px; transition: width .3s ease; }
-
-/* ── ANNOTATION ── */
-.annotation { padding: 10px 12px; background: var(--bg2); border-radius: 7px; border: 1px solid var(--border); margin-bottom: 8px; }
-.ann-meta { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text2); margin-bottom: 5px; }
-.ann-text { font-size: 12px; color: var(--text1); line-height: 1.5; }
-
-/* ── INSIGHTS CARD ── */
-.insight-section { margin-bottom: 24px; }
-.insight-title { font-size: 13px; font-weight: 700; color: var(--text0); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-.divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
-
-/* ── TOAST ── */
-.toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg2); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 18px; font-size: 12px; z-index: 9999; animation: slideUp .25s ease; box-shadow: 0 8px 32px rgba(0,0,0,.4); }
-.toast-success { border-color: rgba(34,197,94,.4); color: var(--green); }
-.toast-error { border-color: rgba(239,68,68,.4); color: var(--red); }
-@keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
-
-/* ── EMPTY STATE ── */
-.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 24px; text-align: center; color: var(--text2); }
-.empty-icon { font-size: 40px; margin-bottom: 14px; opacity: .6; }
-.empty-title { font-size: 14px; font-weight: 600; color: var(--text1); margin-bottom: 6px; }
-.empty-sub { font-size: 12px; }
-
-/* ── SELECTION BAR ── */
-.selection-bar { background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.3); border-radius: 8px; padding: 10px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 16px; font-size: 12px; color: var(--accent2); }
-
-/* ── TWO PANEL ── */
-.two-panel { display: flex; gap: 16px; height: 100%; }
-.panel-left { flex: 1; min-width: 0; }
-.panel-right { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
-
-/* ── LOADING SPINNER ── */
-.spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; display: inline-block; }
+/* --- Spinner --- */
+.spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .55s linear infinite;
+  display: inline-block;
+}
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.gap-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-.insight-card { background: var(--bg1); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
-.insight-card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+/* --- Upload zone --- */
+.upload-zone {
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px; text-align: center;
+  cursor: pointer; transition: all .18s;
+  background: var(--bg2);
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--blue); background: var(--blue-bg);
+  box-shadow: 0 0 0 4px rgba(37,99,235,.06);
+}
+.upload-zone.drag-over { transform: scale(1.01); }
+.upload-zone-icon { font-size: 26px; margin-bottom: 8px; opacity: .75; }
+.upload-zone-title { font-size: 14px; font-weight: 600; color: var(--t0); margin-bottom: 4px; }
+.upload-zone-sub { font-size: 11px; color: var(--t2); }
+
+/* --- Paper card grid --- */
+.paper-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.paper-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px;
+  cursor: pointer; transition: all .15s;
+}
+.paper-card:hover { border-color: var(--blue); box-shadow: 0 4px 20px rgba(37,99,235,.12); transform: translateY(-1px); }
+.paper-card.selected { border-color: var(--blue); background: var(--blue-bg); }
+.paper-card-title { font-size: 13px; font-weight: 600; color: var(--t0); line-height: 1.4; margin-bottom: 5px; }
+.paper-card-author { font-size: 11px; color: var(--t1); margin-bottom: 10px; }
+.paper-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+
+/* --- Annotations --- */
+.annotation {
+  padding: 10px 12px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 8px;
+}
+.ann-meta { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--t2); margin-bottom: 5px; font-family: var(--mono); }
+.ann-text { font-size: 12px; color: var(--t1); line-height: 1.6; }
+
+/* --- Markdown content --- */
+.md-content { font-size: 13px; color: var(--t1); line-height: 1.8; }
+.md-content h1, .md-content h2 { font-size: 14px; font-weight: 700; color: var(--t0); margin: 18px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.md-content h3 { font-size: 13px; font-weight: 600; color: var(--t0); margin: 14px 0 6px; }
+.md-content ul, .md-content ol { padding-left: 18px; margin: 6px 0; }
+.md-content li { margin-bottom: 4px; }
+.md-content strong { color: var(--t0); font-weight: 600; }
+.md-content em { color: var(--t1); font-style: italic; }
+.md-content code { font-family: var(--mono); font-size: 11.5px; background: var(--bg3); padding: 2px 5px; border-radius: 4px; color: var(--blue3); }
+.md-content pre { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin: 10px 0; overflow-x: auto; }
+.md-content blockquote { border-left: 3px solid var(--blue); padding-left: 14px; color: var(--t1); margin: 10px 0; }
+.md-content p { margin-bottom: 8px; }
+
+/* --- Toast --- */
+.toast {
+  position: fixed; bottom: 20px; right: 20px;
+  padding: 11px 18px; border-radius: var(--radius-lg);
+  font-size: 12px; font-weight: 500; z-index: 9999;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  animation: toast-in .2s ease;
+  max-width: 360px;
+}
+@keyframes toast-in { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+.toast-success { border-color: rgba(34,197,94,.35); color: var(--green); }
+.toast-error { border-color: rgba(239,68,68,.35); color: var(--red); }
+.toast-info { border-color: rgba(37,99,235,.35); color: var(--blue2); }
+
+/* --- Modal --- */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; animation: modal-in .15s ease;
+}
+@keyframes modal-in { from { opacity:0; } to { opacity:1; } }
+.modal {
+  background: var(--bg1); border: 1px solid var(--border2);
+  border-radius: var(--radius-lg); width: 480px; max-width: 90vw;
+  max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.7);
+}
+.modal-header { padding: 20px 22px 16px; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 15px; font-weight: 600; }
+.modal-subtitle { font-size: 12px; color: var(--t1); margin-top: 3px; }
+.modal-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; }
+.modal-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* --- Empty state --- */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 24px; text-align: center; }
+.empty-state-icon { font-size: 40px; margin-bottom: 16px; opacity: .45; }
+.empty-state-title { font-size: 15px; font-weight: 600; color: var(--t1); margin-bottom: 6px; }
+.empty-state-sub { font-size: 12px; color: var(--t2); line-height: 1.6; max-width: 300px; }
+
+/* --- Section headers inside panels --- */
+.section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.section-title { font-size: 13px; font-weight: 600; color: var(--t0); }
+
+/* ==========================================================================
+   CHAT
+   ========================================================================== */
+.chat-messages {
+  flex: 1; min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.chat-message { display: flex; gap: 12px; }
+@keyframes msg-in { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+.chat-message { animation: msg-in .2s ease; }
+.chat-avatar {
+  width: 32px; height: 32px; min-width: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+}
+.chat-body { flex: 1; min-width: 0; }
+.chat-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; }
+.chat-name { font-size: 12px; font-weight: 600; color: var(--t0); }
+.chat-time { font-family: var(--mono); font-size: 10px; color: var(--t2); }
+.chat-bubble {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 4px 10px 10px 10px;
+  padding: 10px 14px;
+}
+.msg-ai .chat-bubble { background: var(--bg1); border-color: rgba(37,99,235,.2); }
+.msg-ai .chat-name { color: var(--blue2); }
+.chat-content { font-size: 13px; color: var(--t1); line-height: 1.75; }
+.chat-content code { font-family: var(--mono); font-size: 11px; background: var(--bg3); padding: 1px 4px; border-radius: 3px; color: var(--blue3); }
+.chat-content h2, .chat-content h3 { font-size: 13px; font-weight: 600; color: var(--t0); margin: 10px 0 5px; }
+.chat-content ul, .chat-content ol { padding-left: 16px; margin: 4px 0; }
+.chat-content p { margin-bottom: 6px; }
+.chat-citations { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.chat-cite {
+  font-family: var(--mono); font-size: 9px;
+  background: var(--blue-bg2); color: var(--blue3);
+  border: 1px solid rgba(37,99,235,.2);
+  padding: 2px 7px; border-radius: 3px;
+}
+.typing-dots { display: flex; gap: 4px; padding: 8px; }
+.typing-dot { width: 6px; height: 6px; background: var(--blue2); border-radius: 50%; animation: dot-bounce .8s infinite; }
+.typing-dot:nth-child(2) { animation-delay: .16s; }
+.typing-dot:nth-child(3) { animation-delay: .32s; }
+@keyframes dot-bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+.chat-input-bar {
+  flex-shrink: 0;
+  padding: 14px 20px; border-top: 1px solid var(--border);
+  background: var(--bg1);
+}
+.chat-input-row { display: flex; gap: 8px; align-items: flex-end; }
+.chat-textarea {
+  flex: 1; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; color: var(--t0);
+  font-family: var(--sans); font-size: 13px; resize: none;
+  min-height: 42px; max-height: 120px; transition: border-color .15s;
+}
+.chat-textarea:focus { outline: none; border-color: var(--blue); }
+.chat-input-hint { font-size: 10px; color: var(--t2); margin-top: 6px; display: flex; gap: 12px; }
+
+/* ==========================================================================
+   KNOWLEDGE GRAPH
+   ========================================================================== */
+.kg-header {
+  flex-shrink: 0;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+  background: var(--bg1); display: flex; align-items: center; gap: 16px;
+}
+/* kg-body fills all remaining space with position:relative so #kg-canvas can be absolute */
+.kg-body { flex: 1; min-height: 0; position: relative; background: var(--bg0); }
+#kg-canvas { position: absolute; inset: 0; }
+
+/* ==========================================================================
+   DIAGRAMS  
+   ========================================================================== */
+.diagram-header {
+  flex-shrink: 0;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  background: var(--bg1);
+}
+/* overflow:auto on both axes = scroll in any direction */
+.diagram-canvas { flex: 1; min-height: 0; overflow: auto; background: var(--bg0); }
+#mermaid-output { display: inline-block; min-width: 100%; padding: 36px; }
+#mermaid-output svg { display: block; max-width: none !important; height: auto !important; }
+.diagram-source { flex-shrink: 0; border-top: 1px solid var(--border); background: var(--bg1); }
+
+/* ==========================================================================
+   LIBRARY LAYOUT — ALPINE x-show SAFE CLASSES
+   
+   CRITICAL: Never put display:flex on Alpine x-show elements via inline style=""
+   Alpine's x-show sets el.style.display='none' then restores with el.style.display=''
+   which CLEARS any inline display:flex. Use CSS classes so the class rule re-applies.
+   ========================================================================== */
+
+/* Library grid (no paper selected) */
+.library-grid {
+  flex: 1; min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+/* Library detail wrapper (paper selected) */
+.library-detail {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   LIBRARY DETAIL — THE DEFINITIVE SCROLL FIX
+   
+   Use FLEX ROW not CSS grid. Each column:
+     flex: 1 (or fixed width) + min-width: 0 + overflow-y: auto
+   
+   The parent must be: flex-direction:row + overflow:hidden + height constrained
+   ========================================================================== */
+.detail-header {
+  flex-shrink: 0;
+  padding: 0 20px; height: 56px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 1px 0 var(--border);
+}
+.detail-title {
+  flex: 1; min-width: 0;
+  font-size: 13px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* This is the key: flex row, constrained height, each col independently scrollable */
+.detail-cols {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: row;
+  overflow: hidden;
+}
+.detail-col {
+  min-width: 0;    /* CRITICAL for flex items — allows shrinking below content width */
+  overflow-y: auto;    /* each column scrolls independently */
+  padding: 20px;
+  border-right: 1px solid var(--border);
+}
+.detail-col:last-child { border-right: none; }
+.detail-col-wide { flex: 1; }    /* summary & reliability take equal space */
+.detail-col-narrow { width: 290px; flex-shrink: 0; }  /* sidebar column */
+.detail-col-head {
+  font-size: 10px; font-weight: 700; color: var(--t2);
+  text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0;
+  background: var(--bg1);
+  z-index: 1;
+  padding-top: 2px;
+}
+
+/* ==========================================================================
+   HOME / LANDING PAGE
+   ========================================================================== */
+.home-hero {
+  background: linear-gradient(180deg, rgba(37,99,235,.06) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 36px 40px 28px;
+  flex-shrink: 0;
+}
+.home-hero h1 { font-size: 22px; font-weight: 700; letter-spacing: -.4px; color: var(--t0); margin-bottom: 6px; }
+.home-hero p { font-size: 13px; color: var(--t1); max-width: 540px; line-height: 1.7; }
+.home-body { flex: 1; min-height: 0; overflow-y: auto; padding: 28px 40px 48px; }
+.feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 28px; }
+.feature-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px;
+  cursor: pointer; transition: all .15s;
+}
+.feature-card:hover { border-color: var(--border2); box-shadow: 0 4px 20px rgba(0,0,0,.25); transform: translateY(-1px); }
+.feature-card-icon { font-size: 20px; margin-bottom: 10px; }
+.feature-card-title { font-size: 13px; font-weight: 600; color: var(--t0); margin-bottom: 5px; }
+.feature-card-desc { font-size: 12px; color: var(--t1); line-height: 1.6; }
+.quick-start { background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 22px; }
+.qs-step { display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.qs-step:last-child { border-bottom: none; }
+.qs-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--blue-bg2); color: var(--blue2);
+  font-size: 11px; font-weight: 700; font-family: var(--mono);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.qs-text { flex: 1; }
+.qs-text strong { font-size: 13px; color: var(--t0); font-weight: 600; display: block; margin-bottom: 2px; }
+.qs-text span { font-size: 12px; color: var(--t1); }
+
+/* ==========================================================================
+   MISC
+   ========================================================================== */
+.kg-legend { display: flex; gap: 12px; }
+.kg-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--t1); }
+.kg-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.compare-bar {
+  background: var(--blue-bg); border: 1px solid rgba(37,99,235,.25);
+  border-radius: var(--radius); padding: 9px 14px;
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px; font-size: 12px; color: var(--blue2);
+}
+.section-divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 </style>
 </head>
 <body x-data="app()" x-init="init()">
 
-<!-- ══════════════════════════════════════════════════════ SHELL -->
+<!-- ============================================================ SHELL -->
 <div class="shell">
 
-  <!-- ════════════════ SIDEBAR -->
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-logo">
-        <div class="brand-icon">✦</div>
-        <div>
-          <div class="brand-name">Nexus</div>
-          <div class="brand-tag">Research Intelligence</div>
+<!-- ======================== SIDEBAR ======================== -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-logo">N</div>
+    <div>
+      <div class="brand-wordmark">Nexus</div>
+      <div class="brand-version">Research Intelligence</div>
+    </div>
+  </div>
+
+  <div class="proj-header">
+    <div class="proj-label">Project</div>
+    <select class="proj-select" x-model="activePid" @change="onProjectChange()">
+      <option value="">Select a project…</option>
+      <template x-for="p in projects" :key="p.id">
+        <option :value="p.id" x-text="p.name"></option>
+      </template>
+    </select>
+    <button class="btn-new-proj" @click="showCreateProject=true">+ New project</button>
+  </div>
+
+  <div class="nav-section">Views</div>
+  <div class="nav-items">
+    <div class="nav-item" :class="{active:tab==='home'}" @click="tab='home'">
+      <span class="ico">⌂</span> Home
+    </div>
+    <div class="nav-item" :class="{active:tab==='dashboard'}" @click="tab='dashboard'">
+      <span class="ico">▦</span> Dashboard
+      <span class="nav-badge" x-text="stats.total_papers||0"></span>
+    </div>
+    <div class="nav-item" :class="{active:tab==='library'}" @click="tab='library'">
+      <span class="ico">⊞</span> Library
+      <span class="nav-badge" x-text="Object.keys(project?.papers||{}).length"></span>
+    </div>
+    <div class="nav-item" :class="{active:tab==='chat'}" @click="tab='chat'">
+      <span class="ico">◻</span> Research Chat
+      <span class="nav-badge" x-text="(project?.chat||[]).length"></span>
+    </div>
+    <div class="nav-item" :class="{active:tab==='insights'}" @click="tab='insights'">
+      <span class="ico">◎</span> Insights
+    </div>
+    <div class="nav-item" :class="{active:tab==='graph'}"
+         @click="tab='graph'; $nextTick(()=>setTimeout(()=>renderGraph(),200))">
+      <span class="ico">◈</span> Knowledge Graph
+    </div>
+    <div class="nav-item" :class="{active:tab==='visuals'}" @click="tab='visuals'">
+      <span class="ico">◇</span> Diagrams
+    </div>
+  </div>
+
+  <div class="nav-section" x-show="project && Object.keys(project?.papers||{}).length > 0">Papers</div>
+  <div class="sb-papers" x-show="project">
+    <template x-for="(p,hash) in (project?.papers||{})" :key="hash">
+      <div class="sb-paper-item" :class="{active:selectedHash===hash}"
+           @click="selectedHash=hash; selectedPaper=p; tab='library'">
+        <div class="sb-paper-title" x-text="p.title||p.file_name"></div>
+        <div class="sb-paper-meta">
+          <span class="status-dot" :style="'background:'+(p.status==='summarized'?'var(--green)':p.status==='processing'?'var(--orange)':'var(--t2)')"></span>
+          <span x-text="p.status"></span>
+          <span>·</span>
+          <span x-text="(p.num_pages||0)+'p'"></span>
         </div>
       </div>
+    </template>
+  </div>
+
+  <div class="sb-footer">
+    <div class="proj-label">Team</div>
+    <div class="avatar-stack">
+      <template x-for="(c,name) in (project?.collaborators||{})" :key="name">
+        <div class="avatar" :style="`background:${c.color}`" :title="name" x-text="initials(name)"></div>
+      </template>
+      <template x-if="Object.keys(project?.collaborators||{}).length===0">
+        <span style="font-size:11px;color:var(--t2)">No collaborators</span>
+      </template>
     </div>
+  </div>
+</aside>
 
-    <!-- Project selector -->
-    <div class="project-selector">
-      <div class="project-label">Active Project</div>
-      <select class="project-select" x-model="activePid" @change="onProjectChange()">
-        <option value="">— Select project —</option>
-        <template x-for="p in projects" :key="p.id">
-          <option :value="p.id" x-text="p.name"></option>
-        </template>
-      </select>
-      <button class="btn-new-project" @click="showCreateProject=true">+ New Project</button>
-    </div>
+<!-- ======================== MAIN ======================== -->
+<main class="main">
 
-    <!-- Nav -->
-    <div class="sb-section">Navigation</div>
-    <ul class="nav-list">
-      <li class="nav-item" :class="{active: tab==='dashboard'}" @click="tab='dashboard'">
-        <span class="nav-icon">⬡</span> Dashboard
-      </li>
-      <li class="nav-item" :class="{active: tab==='library'}" @click="tab='library'">
-        <span class="nav-icon">📚</span> Library
-        <span class="nav-badge" x-show="project?.papers && Object.keys(project.papers).length > 0" x-text="Object.keys(project?.papers||{}).length"></span>
-      </li>
-      <li class="nav-item" :class="{active: tab==='chat'}" @click="tab='chat'">
-        <span class="nav-icon">💬</span> Research Chat
-      </li>
-      <li class="nav-item" :class="{active: tab==='insights'}" @click="tab='insights'">
-        <span class="nav-icon">🔍</span> Insights
-      </li>
-      <li class="nav-item" :class="{active: tab==='graph'}" @click="tab='graph'; $nextTick(()=>renderGraph())">
-        <span class="nav-icon">🕸️</span> Knowledge Graph
-      </li>
-      <li class="nav-item" :class="{active: tab==='visuals'}" @click="tab='visuals'">
-        <span class="nav-icon">⚡</span> Diagrams
-      </li>
-    </ul>
-
-    <!-- Team -->
-    <div class="sb-section" x-show="project">Team</div>
-    <div class="team-section" x-show="project">
-      <div class="team-avatars">
-        <template x-for="(collab, name) in (project?.collaborators||{})" :key="name">
-          <div class="avatar avatar-online" :style="`background:${collab.color}`"
-               :title="name" x-text="initials(name)"></div>
-        </template>
-      </div>
-      <div style="margin-top:8px">
-        <input class="input" style="font-size:11px;padding:6px 10px" placeholder="Your name…" x-model="username"/>
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-crumb" x-text="project?.name || 'Nexus'"></div>
+    <template x-if="project && tab !== 'home'">
+      <span class="topbar-sep">›</span>
+    </template>
+    <div class="topbar-sub" x-text="tabLabel()"></div>
+    <div class="topbar-actions">
+      <template x-if="project && tab !== 'home'">
+        <button class="btn btn-primary btn-sm" @click="showUpload=true">↑ Upload PDF</button>
+      </template>
+      <div style="display:flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--border)">
+        <div class="avatar" style="background:var(--blue);width:28px;height:28px;font-size:10px" x-text="initials(username)"></div>
+        <span style="font-size:12px;color:var(--t1)" x-text="username"></span>
       </div>
     </div>
+  </div>
 
-    <!-- Paper list -->
-    <div class="sb-section" x-show="project && Object.keys(project?.papers||{}).length > 0">Papers</div>
-    <div class="paper-list" x-show="project">
-      <template x-for="(p, hash) in (project?.papers||{})" :key="hash">
-        <div class="paper-item" :class="{active: selectedHash===hash}"
-             @click="selectedHash=hash; selectedPaper=p; if(tab==='dashboard') tab='library'">
-          <div class="paper-item-title" x-text="p.title || p.file_name"></div>
-          <div class="paper-item-meta">
-            <span class="dot" :class="{'dot-green': p.status==='summarized', 'dot-orange': p.status==='processing', 'dot-gray': p.status==='pending'}"></span>
-            <span x-text="p.status"></span>
-            <span>·</span>
-            <span x-text="(p.num_pages||0)+'p'"></span>
+  <!-- Tab bar (hidden on home) -->
+  <div class="tab-bar" x-show="project && tab !== 'home'">
+    <button class="tab-item" :class="{active:tab==='dashboard'}" @click="tab='dashboard'">Dashboard</button>
+    <button class="tab-item" :class="{active:tab==='library'}" @click="tab='library'">
+      Library <span class="tab-count" x-text="Object.keys(project?.papers||{}).length"></span>
+    </button>
+    <button class="tab-item" :class="{active:tab==='chat'}" @click="tab='chat'">
+      Chat <span class="tab-count" x-text="(project?.chat||[]).length"></span>
+    </button>
+    <button class="tab-item" :class="{active:tab==='insights'}" @click="tab='insights'">Insights</button>
+    <button class="tab-item" :class="{active:tab==='graph'}"
+            @click="tab='graph'; $nextTick(()=>setTimeout(()=>renderGraph(),200))">Graph</button>
+    <button class="tab-item" :class="{active:tab==='visuals'}" @click="tab='visuals'">Diagrams</button>
+  </div>
+
+  <!-- ================== PANELS ================== -->
+  <div class="panels">
+
+    <!-- ─── HOME / GUIDE ─── -->
+    <div class="panel-col" x-show="tab==='home'">
+      <div class="home-hero">
+        <h1>Research Intelligence Platform</h1>
+        <p>Upload, analyse, and connect academic papers with AI. Surface insights, identify gaps, and collaborate with your team — all in one workspace.</p>
+        <div style="display:flex;gap:8px;margin-top:18px">
+          <button class="btn btn-primary" @click="showCreateProject=true" x-show="!project">Create your first project →</button>
+          <button class="btn btn-primary" @click="tab='library'" x-show="project">Open Library →</button>
+          <button class="btn btn-ghost" @click="tab='dashboard'" x-show="project">Go to Dashboard</button>
+        </div>
+      </div>
+      <div class="home-body">
+        <div style="margin-bottom:20px">
+          <div style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Features</div>
+          <div class="feature-grid">
+            <div class="feature-card" @click="tab='library'">
+              <div class="feature-card-icon">⊞</div>
+              <div class="feature-card-title">Paper Library</div>
+              <div class="feature-card-desc">Upload PDF papers and let AI extract summaries, reliability assessments, and research topics automatically.</div>
+            </div>
+            <div class="feature-card" @click="tab='chat'">
+              <div class="feature-card-icon">◻</div>
+              <div class="feature-card-title">Research Chat</div>
+              <div class="feature-card-desc">Ask questions across your entire library. The AI cites exact passages from your uploaded papers.</div>
+            </div>
+            <div class="feature-card" @click="tab='insights'">
+              <div class="feature-card-icon">◎</div>
+              <div class="feature-card-title">Gap Analysis</div>
+              <div class="feature-card-desc">Identify contradictions, unexplored areas, and research gaps across all papers in your project.</div>
+            </div>
+            <div class="feature-card" @click="tab='graph'; $nextTick(()=>setTimeout(()=>renderGraph(),200))">
+              <div class="feature-card-icon">◈</div>
+              <div class="feature-card-title">Knowledge Graph</div>
+              <div class="feature-card-desc">Visualise how papers connect through shared topics. Interactive nodes — drag, zoom, and explore.</div>
+            </div>
+            <div class="feature-card" @click="tab='visuals'">
+              <div class="feature-card-icon">◇</div>
+              <div class="feature-card-title">Diagram Generator</div>
+              <div class="feature-card-desc">Convert any paper into flowcharts, mind maps, timelines, or concept maps — fully scrollable and exportable.</div>
+            </div>
+            <div class="feature-card" @click="showCreateProject=true">
+              <div class="feature-card-icon">▦</div>
+              <div class="feature-card-title">Team Collaboration</div>
+              <div class="feature-card-desc">Invite collaborators, add shared annotations, and track who uploaded and analysed each paper.</div>
+            </div>
           </div>
         </div>
-      </template>
-    </div>
-  </aside>
 
-  <!-- ════════════════ MAIN -->
-  <main class="main">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Quick Start Guide</div>
+            <div class="quick-start">
+              <div class="qs-step">
+                <div class="qs-num">1</div>
+                <div class="qs-text">
+                  <strong>Create a project</strong>
+                  <span>Use the sidebar selector or the button above. Give it a name and a research problem statement.</span>
+                </div>
+              </div>
+              <div class="qs-step">
+                <div class="qs-num">2</div>
+                <div class="qs-text">
+                  <strong>Upload PDF papers</strong>
+                  <span>Drag &amp; drop into the Library or use the ↑ Upload button. Files are parsed and embedded automatically.</span>
+                </div>
+              </div>
+              <div class="qs-step">
+                <div class="qs-num">3</div>
+                <div class="qs-text">
+                  <strong>Analyse each paper</strong>
+                  <span>Open a paper and click Analyse. AI generates a summary, reliability score, and research topics.</span>
+                </div>
+              </div>
+              <div class="qs-step">
+                <div class="qs-num">4</div>
+                <div class="qs-text">
+                  <strong>Chat with your library</strong>
+                  <span>Ask questions — "What methods were used?" or "Which papers contradict each other?" — and get cited answers.</span>
+                </div>
+              </div>
+              <div class="qs-step">
+                <div class="qs-num">5</div>
+                <div class="qs-text">
+                  <strong>Explore insights &amp; visuals</strong>
+                  <span>Run gap analysis, view the knowledge graph, or generate diagrams from any paper.</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-    <!-- Top bar -->
-    <div class="topbar">
-      <span class="topbar-title" x-text="project ? project.name : 'Nexus Research Platform'"></span>
-      <template x-if="project">
-        <span class="topbar-sep">›</span>
-      </template>
-      <span class="topbar-sub" x-text="tabLabel()"></span>
-      <div class="topbar-actions">
-        <template x-if="project">
-          <button class="btn btn-secondary btn-sm" @click="showUpload=true">
-            ↑ Upload Paper
-          </button>
-        </template>
-        <template x-if="!project && projects.length===0">
-          <button class="btn btn-primary btn-sm" @click="showCreateProject=true">
-            + Create First Project
-          </button>
-        </template>
-      </div>
-    </div>
+          <div x-show="project">
+            <div style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Current Project</div>
+            <div class="card">
+              <div style="font-size:14px;font-weight:600;margin-bottom:4px" x-text="project?.name"></div>
+              <div style="font-size:12px;color:var(--t1);margin-bottom:14px" x-text="project?.problem_statement"></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+                <div style="text-align:center;padding:10px;background:var(--bg2);border-radius:var(--radius)">
+                  <div style="font-size:20px;font-weight:700;color:var(--t0)" x-text="stats.total_papers||0"></div>
+                  <div style="font-size:10px;color:var(--t2)">Papers</div>
+                </div>
+                <div style="text-align:center;padding:10px;background:var(--bg2);border-radius:var(--radius)">
+                  <div style="font-size:20px;font-weight:700;color:var(--t0)" x-text="stats.topics||0"></div>
+                  <div style="font-size:10px;color:var(--t2)">Topics</div>
+                </div>
+                <div style="text-align:center;padding:10px;background:var(--bg2);border-radius:var(--radius)">
+                  <div style="font-size:20px;font-weight:700;color:var(--t0)" x-text="stats.chat_messages||0"></div>
+                  <div style="font-size:10px;color:var(--t2)">Messages</div>
+                </div>
+              </div>
+              <div style="margin-top:14px;display:flex;gap:8px">
+                <button class="btn btn-primary btn-sm" @click="tab='library'">Open Library</button>
+                <button class="btn btn-ghost btn-sm" @click="showUpload=true">↑ Upload</button>
+              </div>
+            </div>
+          </div>
 
-    <!-- Tabs -->
-    <div class="tabs" x-show="project">
-      <div class="tab" :class="{active: tab==='dashboard'}" @click="tab='dashboard'">⬡ Dashboard</div>
-      <div class="tab" :class="{active: tab==='library'}" @click="tab='library'">
-        📚 Library <span class="tab-count" x-text="Object.keys(project?.papers||{}).length"></span>
-      </div>
-      <div class="tab" :class="{active: tab==='chat'}" @click="tab='chat'">
-        💬 Chat <span class="tab-count" x-text="(project?.chat||[]).length"></span>
-      </div>
-      <div class="tab" :class="{active: tab==='insights'}" @click="tab='insights'">🔍 Insights</div>
-      <div class="tab" :class="{active: tab==='graph'}" @click="tab='graph'; $nextTick(()=>renderGraph())">🕸️ Graph</div>
-      <div class="tab" :class="{active: tab==='visuals'}" @click="tab='visuals'">⚡ Diagrams</div>
-    </div>
-
-    <!-- ═══ CONTENT AREA ═══ -->
-    <div class="content" x-show="!project">
-      <div class="empty-state">
-        <div class="empty-icon">✦</div>
-        <div class="empty-title">Welcome to Nexus</div>
-        <div class="empty-sub">Create or select a project to start your collaborative research journey</div>
-        <button class="btn btn-primary" style="margin-top:18px" @click="showCreateProject=true">Create New Project</button>
+          <div x-show="!project">
+            <div style="font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Get Started</div>
+            <div class="card" style="text-align:center;padding:32px">
+              <div style="font-size:36px;margin-bottom:14px;opacity:.5">▦</div>
+              <div style="font-size:14px;font-weight:600;color:var(--t1);margin-bottom:6px">No project yet</div>
+              <div style="font-size:12px;color:var(--t2);margin-bottom:18px">Create a project to start organising your research</div>
+              <button class="btn btn-primary" @click="showCreateProject=true">Create First Project</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- ─── DASHBOARD ─── -->
-    <div class="content" x-show="project && tab==='dashboard'" style="padding-bottom:40px">
-      <div class="stats-grid">
+    <div class="panel-scroll" x-show="project && tab==='dashboard'" style="padding:24px 28px 48px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
         <div class="stat-card">
           <div class="stat-icon">📄</div>
-          <div class="stat-val" x-text="stats.total_papers||0"></div>
-          <div class="stat-label">Papers Uploaded</div>
-          <div class="stat-sub" x-show="stats.summarized>0" x-text="stats.summarized+' summarized'"></div>
+          <div class="stat-value" x-text="stats.total_papers||0"></div>
+          <div class="stat-label">Papers</div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">🏷️</div>
-          <div class="stat-val" x-text="stats.topics||0"></div>
-          <div class="stat-label">Research Topics</div>
+          <div class="stat-icon">🏷</div>
+          <div class="stat-value" x-text="stats.topics||0"></div>
+          <div class="stat-label">Topics covered</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">💬</div>
-          <div class="stat-val" x-text="stats.chat_messages||0"></div>
-          <div class="stat-label">Chat Messages</div>
+          <div class="stat-value" x-text="stats.chat_messages||0"></div>
+          <div class="stat-label">Messages</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">👥</div>
-          <div class="stat-val" x-text="stats.collaborators||0"></div>
+          <div class="stat-value" x-text="stats.collaborators||0"></div>
           <div class="stat-label">Collaborators</div>
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-        <!-- Problem Statement -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
         <div class="card">
-          <div class="card-title">🎯 Problem Statement</div>
-          <p style="font-size:13px;color:var(--text1);line-height:1.7" x-text="project?.problem_statement"></p>
+          <div class="card-title">Research Problem</div>
+          <p style="font-size:13px;color:var(--t1);line-height:1.7" x-text="project?.problem_statement"></p>
         </div>
-        <!-- Coverage -->
         <div class="card">
-          <div class="card-title">📊 Topic Coverage</div>
+          <div class="card-title">Topic Coverage</div>
           <template x-if="(stats.coverage_topics||[]).length > 0">
             <div>
-              <template x-for="t in (stats.coverage_topics||[]).slice(0,12)" :key="t">
+              <template x-for="t in (stats.coverage_topics||[]).slice(0,14)" :key="t">
                 <span class="tag" x-text="t"></span>
               </template>
             </div>
           </template>
           <template x-if="(stats.coverage_topics||[]).length === 0">
-            <p style="font-size:12px;color:var(--text2)">Upload papers to see topic coverage</p>
+            <p style="font-size:12px;color:var(--t2)">Analyse papers to see topics</p>
           </template>
         </div>
       </div>
 
-      <!-- Recent papers -->
       <div class="card">
-        <div class="card-title" style="margin-bottom:14px">🕐 Recent Papers</div>
+        <div class="section-head">
+          <div class="card-title" style="margin-bottom:0">All Papers</div>
+          <button class="btn btn-ghost btn-sm" @click="tab='library'">View Library →</button>
+        </div>
         <template x-if="Object.keys(project?.papers||{}).length === 0">
-          <div class="empty-state" style="padding:32px">
-            <div class="empty-icon" style="font-size:24px">📄</div>
-            <div class="empty-title">No papers yet</div>
-            <div class="empty-sub">Click "Upload Paper" to add your first research paper</div>
+          <div class="empty-state">
+            <div class="empty-state-icon">📄</div>
+            <div class="empty-state-title">No papers yet</div>
+            <div class="empty-state-sub">Upload your first PDF to get started</div>
+            <button class="btn btn-primary btn-sm" style="margin-top:14px" @click="showUpload=true">↑ Upload PDF</button>
           </div>
         </template>
-        <template x-for="(p, hash) in project?.papers||{}" :key="hash">
+        <template x-for="(p,hash) in project?.papers||{}" :key="hash">
           <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
             <div style="flex:1;min-width:0">
-              <div style="font-size:12.5px;font-weight:600;color:var(--text0);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="p.title||p.file_name"></div>
-              <div style="font-size:10px;color:var(--text2)" x-text="(p.uploaded_by||'') + ' · ' + (p.num_pages||0) + ' pages · ' + (p.uploaded_at||'').slice(0,10)"></div>
+              <div style="font-size:13px;font-weight:500;color:var(--t0);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="p.title||p.file_name"></div>
+              <div style="font-size:11px;color:var(--t2)" x-text="(p.uploaded_by||'Unknown') + ' · ' + (p.num_pages||0) + ' pages · ' + (p.uploaded_at||'').slice(0,10)"></div>
             </div>
             <span class="badge" :class="'badge-'+p.status" x-text="p.status"></span>
-            <button class="btn btn-secondary btn-sm" @click="selectedHash=hash;selectedPaper=p;tab='library'">View →</button>
+            <button class="btn btn-ghost btn-sm" @click="selectedHash=hash;selectedPaper=p;tab='library'">Open →</button>
           </div>
         </template>
       </div>
     </div>
 
     <!-- ─── LIBRARY ─── -->
-    <div x-show="project && tab==='library'" style="display:flex;flex-direction:column;height:calc(100vh - 108px);overflow:hidden">
+    <div class="panel-col" x-show="project && tab==='library'">
 
-      <!-- Paper grid view -->
-      <div style="flex:1;overflow-y:auto;padding:20px 24px;min-height:0" x-show="!selectedPaper">
+      <!-- Grid view (no paper selected) -->
+      <div class="library-grid" x-show="!selectedPaper">
 
-        <div class="upload-zone" :class="{drag: isDragging}"
+        <div class="upload-zone" :class="{'drag-over':isDragging}"
              @dragover.prevent="isDragging=true" @dragleave="isDragging=false"
              @drop.prevent="onDrop($event)" @click="$refs.fileInput.click()"
              style="margin-bottom:16px">
           <input type="file" x-ref="fileInput" accept=".pdf" multiple style="display:none" @change="onFileInput($event)"/>
-          <div class="upload-icon">📄</div>
-          <div class="upload-title">Drop PDF files here</div>
-          <div class="upload-sub">or click to browse · Multiple files supported</div>
+          <div class="upload-zone-icon">📄</div>
+          <div class="upload-zone-title">Drop PDF files here, or click to browse</div>
+          <div class="upload-zone-sub">Supports multiple files · PDF format only · Files are embedded automatically</div>
         </div>
 
         <template x-if="uploadQueue.length > 0">
-          <div class="card" style="margin-bottom:16px">
-            <div class="card-title">Uploading <span x-text="uploadQueue.length"></span> file(s)…</div>
-            <template x-for="(item, i) in uploadQueue" :key="i">
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-title">Uploading <span x-text="uploadQueue.length"></span> file(s)</div>
+            <template x-for="(item,i) in uploadQueue" :key="i">
               <div style="margin-bottom:10px">
-                <div style="font-size:11px;color:var(--text1);margin-bottom:4px;display:flex;justify-content:space-between">
-                  <span x-text="item.name"></span><span x-text="item.status"></span>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+                  <span style="color:var(--t0)" x-text="item.name"></span>
+                  <span style="color:var(--t2)" x-text="item.status"></span>
                 </div>
-                <div class="progress-bar"><div class="progress-fill" :style="`width:${item.pct}%`"></div></div>
+                <div class="progress"><div class="progress-fill" :style="`width:${item.pct}%`"></div></div>
               </div>
             </template>
           </div>
         </template>
 
         <template x-if="compareSelected.length > 0">
-          <div class="selection-bar">
-            <span><strong x-text="compareSelected.length"></strong> papers selected</span>
-            <button class="btn btn-primary btn-sm" @click="runCompare()" :disabled="compareSelected.length < 2 || comparing">
-              <span x-show="comparing" class="spinner" style="width:12px;height:12px"></span>
-              Compare Papers
+          <div class="compare-bar">
+            <span><strong x-text="compareSelected.length"></strong> papers selected for comparison</span>
+            <button class="btn btn-primary btn-sm" @click="runCompare()" :disabled="compareSelected.length<2||comparing">
+              <span x-show="comparing" class="spinner"></span>
+              <span x-show="!comparing">Compare</span>
             </button>
             <button class="btn btn-ghost btn-sm" @click="compareSelected=[]">Clear</button>
           </div>
         </template>
 
-        <div class="paper-grid">
-          <template x-for="(p, hash) in (project?.papers||{})" :key="hash">
-            <div class="paper-card" :class="{selected: selectedHash===hash}"
-                 @click="selectedHash=hash; selectedPaper=p">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-                <span class="badge" :class="'badge-'+p.status" x-text="p.status"></span>
-                <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;color:var(--text2)" @click.stop>
-                  <input type="checkbox" :value="hash" x-model="compareSelected" style="cursor:pointer"/> Compare
-                </label>
-              </div>
-              <div class="pc-title" x-text="p.title||p.file_name"></div>
-              <div class="pc-author" x-text="p.author!='Unknown' ? p.author : ''"></div>
-              <div class="pc-tags">
-                <template x-for="t in (p.subtopics||[]).slice(0,3)" :key="t">
-                  <span class="tag" x-text="t"></span>
-                </template>
-              </div>
-              <div class="pc-footer">
-                <span class="pc-meta" x-text="(p.num_pages||0)+'p · '+(p.uploaded_by||'')+' · '+(p.uploaded_at||'').slice(0,10)"></span>
-              </div>
-            </div>
-          </template>
-        </div>
-
         <template x-if="compareResult">
-          <div class="card" style="margin-top:20px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-              <div class="card-title" style="margin-bottom:0">⚔️ Comparison Results</div>
-              <button class="btn btn-ghost btn-sm" @click="compareResult=null">✕ Close</button>
+          <div class="card" style="margin-bottom:14px">
+            <div class="section-head">
+              <div class="card-title" style="margin-bottom:0">Comparison Results</div>
+              <button class="btn btn-ghost btn-sm" @click="compareResult=null">Dismiss</button>
             </div>
             <div class="md-content" x-html="renderMd(compareResult)"></div>
           </div>
         </template>
+
+        <div class="paper-grid">
+          <template x-for="(p,hash) in (project?.papers||{})" :key="hash">
+            <div class="paper-card" :class="{selected:compareSelected.includes(hash)}"
+                 @click="selectedHash=hash;selectedPaper=p">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+                <span class="badge" :class="'badge-'+p.status" x-text="p.status"></span>
+                <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;color:var(--t2)" @click.stop>
+                  <input type="checkbox" :value="hash" x-model="compareSelected" style="cursor:pointer"/>
+                  Compare
+                </label>
+              </div>
+              <div class="paper-card-title" x-text="p.title||p.file_name"></div>
+              <div class="paper-card-author" x-text="p.author&&p.author!='Unknown'?p.author:'Unknown author'"></div>
+              <div style="margin-bottom:4px">
+                <template x-for="t in (p.subtopics||[]).slice(0,3)" :key="t">
+                  <span class="tag" x-text="t"></span>
+                </template>
+              </div>
+              <div class="paper-card-footer">
+                <span style="font-size:10px;color:var(--t2);font-family:var(--mono)" x-text="(p.num_pages||0)+'p'"></span>
+                <button class="btn btn-ghost btn-xs" @click.stop="selectedHash=hash;selectedPaper=p">Open →</button>
+              </div>
+            </div>
+          </template>
+        </div>
       </div>
 
-      <!-- Full-width paper detail -->
-      <div x-show="selectedPaper" style="flex:1;overflow-y:auto;min-height:0">
+      <!-- ══ PAPER DETAIL VIEW ══
+           The definitive scroll fix: flex row with each column having:
+           min-width:0 + overflow-y:auto + flex:1 (or fixed width)
+           Parent must be: display:flex + overflow:hidden + flex:1;min-height:0
+      ══ -->
+      <div class="library-detail" x-show="selectedPaper">
 
-        <!-- Sticky header bar -->
-        <div style="position:sticky;top:0;z-index:10;background:var(--bg1);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px">
+        <div class="detail-header">
           <button class="btn btn-ghost btn-sm" @click="selectedPaper=null;selectedHash=null">← Back</button>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" x-text="selectedPaper?.title||selectedPaper?.file_name"></div>
-            <div style="font-size:11px;color:var(--text2)" x-text="(selectedPaper?.author&&selectedPaper?.author!='Unknown'?selectedPaper.author+' · ':'')+((selectedPaper?.num_pages||0)+' pages')"></div>
-          </div>
+          <div class="detail-title" x-text="selectedPaper?.title||selectedPaper?.file_name"></div>
           <span class="badge" :class="'badge-'+(selectedPaper?.status||'pending')" x-text="selectedPaper?.status||'pending'"></span>
-          <button class="btn btn-primary btn-sm" @click="analysePaper()" :disabled="analysing || selectedPaper?.status==='summarized'">
-            <span x-show="analysing" class="spinner" style="width:12px;height:12px"></span>
-            <span x-show="!analysing" x-text="selectedPaper?.status==='summarized'?'✓ Analysed':'✦ Analyse Paper'"></span>
+          <button class="btn btn-primary btn-sm" @click="analysePaper()" :disabled="analysing">
+            <span x-show="analysing" class="spinner"></span>
+            <span x-show="!analysing" x-text="selectedPaper?.status==='summarized'?'↺ Re-analyse':'Analyse'"></span>
           </button>
-          <button class="btn btn-ghost btn-sm" @click="analysePaper()" x-show="selectedPaper?.status==='summarized'" title="Re-run">↺</button>
-          <button class="btn btn-danger btn-sm" @click="deletePaper()">✕ Delete</button>
+          <button class="btn btn-ghost btn-icon btn-sm" @click="deletePaper()" title="Delete paper" style="color:var(--red);border-color:rgba(239,68,68,.2)">✕</button>
         </div>
 
-        <!-- 3-column body -->
-        <div style="padding:24px;display:grid;grid-template-columns:1fr 1fr 300px;gap:20px;align-items:start">
+        <!-- Three columns — each independently scrollable via flex row -->
+        <div class="detail-cols">
 
           <!-- Col 1: AI Summary -->
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent2);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px">
-              📌 AI Summary
-            </div>
+          <div class="detail-col detail-col-wide">
+            <div class="detail-col-head">AI Summary</div>
             <template x-if="selectedPaper?.summary">
               <div class="md-content" x-html="renderMd(selectedPaper.summary)"></div>
             </template>
             <template x-if="!selectedPaper?.summary">
-              <div style="background:var(--bg2);border:2px dashed var(--border2);border-radius:10px;padding:40px 24px;text-align:center;color:var(--text2)">
-                <div style="font-size:32px;margin-bottom:12px">🤖</div>
-                <div style="font-size:13px;font-weight:600;color:var(--text1);margin-bottom:6px">No analysis yet</div>
-                <div style="font-size:12px">Click "✦ Analyse Paper" above to generate a full AI breakdown including methods, findings, and relevance score.</div>
+              <div class="empty-state">
+                <div class="empty-state-icon">🤖</div>
+                <div class="empty-state-title">No analysis yet</div>
+                <div class="empty-state-sub">Click Analyse to generate a full AI breakdown: methods, findings, contributions, and relevance score.</div>
+                <button class="btn btn-primary btn-sm" style="margin-top:14px" @click="analysePaper()" :disabled="analysing">
+                  <span x-show="analysing" class="spinner"></span>
+                  <span x-show="!analysing">Analyse this paper</span>
+                </button>
               </div>
             </template>
           </div>
 
           <!-- Col 2: Reliability -->
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent2);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)">
-              🛡️ Reliability Assessment
-            </div>
+          <div class="detail-col detail-col-wide">
+            <div class="detail-col-head">Reliability Assessment</div>
             <template x-if="selectedPaper?.reliability">
               <div class="md-content" x-html="renderMd(selectedPaper.reliability)"></div>
             </template>
             <template x-if="!selectedPaper?.reliability">
-              <div style="background:var(--bg2);border:2px dashed var(--border2);border-radius:10px;padding:40px 24px;text-align:center;color:var(--text2)">
-                <div style="font-size:32px;margin-bottom:12px">🛡️</div>
-                <div style="font-size:12px">Reliability check generated alongside the AI summary.</div>
+              <div class="empty-state">
+                <div class="empty-state-icon">🛡</div>
+                <div class="empty-state-title">Not yet assessed</div>
+                <div class="empty-state-sub">Reliability assessment is generated alongside the AI summary.</div>
               </div>
             </template>
           </div>
 
-          <!-- Col 3: Sidebar info -->
-          <div style="display:flex;flex-direction:column;gap:14px">
+          <!-- Col 3: Metadata & Annotations -->
+          <div class="detail-col detail-col-narrow">
 
-            <div class="card-sm" x-show="(selectedPaper?.subtopics||[]).length > 0">
-              <div class="card-title" style="margin-bottom:10px">🏷️ Research Topics</div>
-              <template x-for="t in (selectedPaper?.subtopics||[])" :key="t">
-                <span class="tag" x-text="t"></span>
-              </template>
-            </div>
+            <template x-if="(selectedPaper?.subtopics||[]).length > 0">
+              <div class="card-sm" style="margin-bottom:12px">
+                <div class="card-title">Research Topics</div>
+                <template x-for="t in (selectedPaper?.subtopics||[])" :key="t">
+                  <span class="tag" x-text="t"></span>
+                </template>
+              </div>
+            </template>
 
-            <div class="card-sm">
-              <div class="card-title" style="margin-bottom:10px">📋 Metadata</div>
-              <div style="display:flex;flex-direction:column;gap:7px;font-size:12px">
-                <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Uploaded by</span><span style="color:var(--text0);font-weight:600" x-text="selectedPaper?.uploaded_by||'—'"></span></div>
-                <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Pages</span><span style="color:var(--text0);font-weight:600" x-text="selectedPaper?.num_pages||0"></span></div>
-                <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Date</span><span style="color:var(--text0);font-weight:600" x-text="(selectedPaper?.uploaded_at||'').slice(0,10)"></span></div>
+            <div class="card-sm" style="margin-bottom:12px">
+              <div class="card-title">File Info</div>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <div style="display:flex;justify-content:space-between;font-size:12px">
+                  <span style="color:var(--t2)">Uploaded by</span>
+                  <span style="color:var(--t0);font-weight:500" x-text="selectedPaper?.uploaded_by||'—'"></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px">
+                  <span style="color:var(--t2)">Pages</span>
+                  <span style="color:var(--t0);font-weight:500;font-family:var(--mono)" x-text="selectedPaper?.num_pages||0"></span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px">
+                  <span style="color:var(--t2)">Uploaded</span>
+                  <span style="color:var(--t0);font-family:var(--mono);font-size:11px" x-text="(selectedPaper?.uploaded_at||'').slice(0,10)"></span>
+                </div>
+                <template x-if="selectedPaper?.author && selectedPaper?.author !== 'Unknown'">
+                  <div style="display:flex;justify-content:space-between;font-size:12px">
+                    <span style="color:var(--t2)">Author</span>
+                    <span style="color:var(--t0);font-weight:500;text-align:right;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="selectedPaper?.author"></span>
+                  </div>
+                </template>
               </div>
             </div>
 
             <div class="card-sm">
-              <div class="card-title" style="margin-bottom:10px">
-                💬 Team Notes
-                <span style="font-weight:400;color:var(--text2);font-size:10px" x-text="'('+((selectedPaper?.annotations||[]).length)+')'"></span>
+              <div class="card-title">
+                Team Notes
+                <span style="font-weight:400;color:var(--t2)" x-text="'(' + ((selectedPaper?.annotations||[]).length) + ')'"></span>
               </div>
               <template x-for="ann in (selectedPaper?.annotations||[])" :key="ann.id">
                 <div class="annotation">
                   <div class="ann-meta">
-                    <div class="avatar" style="width:18px;height:18px;font-size:8px;border:none" :style="`background:${avatarColor(ann.user)}`" x-text="initials(ann.user)"></div>
-                    <strong x-text="ann.user"></strong><span x-text="ann.timestamp"></span>
-                    <button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:1px 5px;font-size:9px" @click="deleteAnnotation(ann.id)">✕</button>
+                    <div class="avatar" style="width:16px;height:16px;font-size:7px;border:none"
+                         :style="`background:${avatarColor(ann.user)}`"
+                         x-text="initials(ann.user)"></div>
+                    <strong x-text="ann.user"></strong>
+                    <span x-text="ann.timestamp"></span>
+                    <button class="btn btn-ghost btn-xs" style="margin-left:auto;padding:1px 5px"
+                            @click="deleteAnnotation(ann.id)">✕</button>
                   </div>
                   <div class="ann-text" x-text="ann.text"></div>
                 </div>
               </template>
-              <div style="display:flex;gap:8px;margin-top:10px">
-                <input class="input" style="flex:1;font-size:11px;padding:7px 10px" placeholder="Add a note…" x-model="newAnnotation" @keyup.enter="addAnnotation()"/>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <input class="input input-mono" style="font-size:11px;padding:6px 9px"
+                       placeholder="Add a note…"
+                       x-model="newAnnotation"
+                       @keyup.enter="addAnnotation()"/>
                 <button class="btn btn-secondary btn-sm" @click="addAnnotation()">Add</button>
               </div>
             </div>
+
           </div>
-        </div>
-      </div>
-    </div>
+        </div><!-- /detail-cols -->
+      </div><!-- /paper detail -->
+
+    </div><!-- /library -->
 
     <!-- ─── CHAT ─── -->
-    <div x-show="project && tab==='chat'" style="height:calc(100vh - 108px);display:flex;flex-direction:column">
+    <div class="panel-col" x-show="project && tab==='chat'">
       <div class="chat-messages" x-ref="chatScroll">
         <template x-if="(project?.chat||[]).length === 0">
-          <div class="empty-state" style="padding:64px">
-            <div class="empty-icon">💬</div>
-            <div class="empty-title">Research Assistant Ready</div>
-            <div class="empty-sub">Ask anything about your uploaded papers. The AI will cite its sources.</div>
+          <div class="empty-state" style="padding-top:80px">
+            <div class="empty-state-icon">💬</div>
+            <div class="empty-state-title">Research Assistant Ready</div>
+            <div class="empty-state-sub">Ask questions about your papers. The AI cites exact sources from your uploaded documents.</div>
           </div>
         </template>
-        <template x-for="(msg, i) in (project?.chat||[])" :key="i">
-          <div class="msg" :class="msg.type==='ai'?'msg-ai':''">
-            <div class="msg-avatar" :style="msg.type==='ai'?'background:linear-gradient(135deg,#6366f1,#a855f7)':'background:'+avatarColor(msg.user)">
-              <span x-text="msg.type==='ai'?'✦':initials(msg.user)"></span>
+        <template x-for="(msg,i) in (project?.chat||[])" :key="i">
+          <div class="chat-message" :class="msg.type==='ai'?'msg-ai':''">
+            <div class="chat-avatar"
+                 :style="msg.type==='ai'?'background:var(--blue)':'background:'+avatarColor(msg.user)">
+              <span x-text="msg.type==='ai'?'AI':initials(msg.user)"></span>
             </div>
-            <div class="msg-body">
-              <div class="msg-header">
-                <span class="msg-name" x-text="msg.user"></span>
-                <span class="msg-time" x-text="msg.timestamp"></span>
+            <div class="chat-body">
+              <div class="chat-header">
+                <span class="chat-name" x-text="msg.user"></span>
+                <span class="chat-time" x-text="msg.timestamp"></span>
               </div>
-              <div class="msg-bubble">
-                <div class="msg-content" x-html="renderMd(msg.content)"></div>
+              <div class="chat-bubble">
+                <div class="chat-content" x-html="renderMd(msg.content)"></div>
               </div>
               <template x-if="msg.citations && msg.citations.length > 0">
-                <div class="citations-row">
+                <div class="chat-citations">
                   <template x-for="c in msg.citations.slice(0,4)" :key="c">
-                    <span class="cite-chip" x-text="c.length>50 ? c.slice(0,48)+'…' : c"></span>
+                    <span class="chat-cite" x-text="c.length>55?c.slice(0,53)+'…':c"></span>
                   </template>
                 </div>
               </template>
@@ -661,12 +1266,12 @@ html, body { height: 100%; background: var(--bg0); color: var(--text0); font-fam
           </div>
         </template>
         <template x-if="chatLoading">
-          <div class="msg msg-ai">
-            <div class="msg-avatar" style="background:linear-gradient(135deg,#6366f1,#a855f7)">✦</div>
-            <div class="msg-body">
-              <div class="msg-header"><span class="msg-name" style="color:var(--accent2)">Nexus AI</span></div>
-              <div class="msg-bubble">
-                <div class="typing-indicator">
+          <div class="chat-message msg-ai">
+            <div class="chat-avatar" style="background:var(--blue)">AI</div>
+            <div class="chat-body">
+              <div class="chat-header"><span class="chat-name">Nexus AI</span></div>
+              <div class="chat-bubble">
+                <div class="typing-dots">
                   <div class="typing-dot"></div>
                   <div class="typing-dot"></div>
                   <div class="typing-dot"></div>
@@ -676,57 +1281,69 @@ html, body { height: 100%; background: var(--bg0); color: var(--text0); font-fam
           </div>
         </template>
       </div>
-      <div class="chat-input-area">
+
+      <div class="chat-input-bar">
         <div class="chat-input-row">
-          <textarea class="chat-textarea" placeholder="Ask anything about your research papers…"
-                    x-model="chatInput" @keydown.enter.prevent="if(!$event.shiftKey) sendChat()"
-                    rows="1" @input="autoResize($event)"></textarea>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <button class="btn btn-primary btn-icon" @click="sendChat()" :disabled="!chatInput.trim() || chatLoading" title="Send (Enter)">→</button>
-            <button class="btn btn-ghost btn-icon" :class="{active: useWebSearch}" @click="useWebSearch=!useWebSearch"
-                    :title="useWebSearch?'Web search ON':'Web search OFF'"
-                    :style="useWebSearch?'border-color:var(--accent);color:var(--accent)':''">🌐</button>
+          <textarea class="chat-textarea"
+                    placeholder="Ask a question about your research papers…"
+                    x-model="chatInput"
+                    @keydown.enter.prevent="if(!$event.shiftKey) sendChat()"
+                    rows="1"
+                    @input="autoResize($event)"></textarea>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <button class="btn btn-primary btn-icon"
+                    @click="sendChat()"
+                    :disabled="!chatInput.trim()||chatLoading">→</button>
+            <button class="btn btn-ghost btn-icon"
+                    :style="useWebSearch?'border-color:var(--blue);color:var(--blue2)':''"
+                    @click="useWebSearch=!useWebSearch"
+                    title="Toggle web search">🌐</button>
           </div>
         </div>
-        <div style="font-size:10px;color:var(--text2);margin-top:6px;display:flex;gap:12px">
+        <div class="chat-input-hint">
           <span>Enter to send · Shift+Enter for new line</span>
-          <span x-show="useWebSearch" style="color:var(--accent2)">🌐 Web search enabled</span>
+          <span x-show="useWebSearch" style="color:var(--blue2)">Web search enabled</span>
         </div>
       </div>
     </div>
 
     <!-- ─── INSIGHTS ─── -->
-    <div class="content" x-show="project && tab==='insights'">
-      <div class="gap-row">
-        <div class="insight-card">
-          <div class="insight-card-title" style="color:var(--green)">📊 Coverage Summary</div>
-          <div style="font-size:12px;color:var(--text1);margin-bottom:10px" x-text="Object.keys(project?.papers||{}).length + ' papers · ' + (stats.topics||0) + ' topics covered'"></div>
-          <div>
-            <template x-for="t in (stats.coverage_topics||[]).slice(0,8)" :key="t">
-              <span class="tag" x-text="t"></span>
-            </template>
-          </div>
+    <div class="panel-scroll" x-show="project && tab==='insights'" style="padding:24px 28px 48px">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+        <div class="card">
+          <div class="card-title" style="color:var(--green)">Coverage Summary</div>
+          <div style="font-size:13px;color:var(--t1);margin-bottom:10px"
+               x-text="Object.keys(project?.papers||{}).length + ' papers · ' + (stats.topics||0) + ' topics'"></div>
+          <template x-for="t in (stats.coverage_topics||[]).slice(0,10)" :key="t">
+            <span class="tag" x-text="t"></span>
+          </template>
         </div>
-        <div class="insight-card">
-          <div class="insight-card-title" style="color:var(--orange)">👥 Team Activity</div>
-          <template x-for="(c, name) in (project?.collaborators||{})" :key="name">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-              <div class="avatar" style="width:22px;height:22px;font-size:9px" :style="`background:${c.color}`" x-text="initials(name)"></div>
+        <div class="card">
+          <div class="card-title" style="color:var(--orange)">Team Activity</div>
+          <template x-if="Object.keys(project?.collaborators||{}).length === 0">
+            <p style="font-size:12px;color:var(--t2)">No collaborators yet</p>
+          </template>
+          <template x-for="(c,name) in (project?.collaborators||{})" :key="name">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <div class="avatar" style="width:28px;height:28px;font-size:10px"
+                   :style="`background:${c.color}`" x-text="initials(name)"></div>
               <div>
-                <div style="font-size:11px;font-weight:600" x-text="name"></div>
-                <div style="font-size:10px;color:var(--text2)" x-text="(c.papers||[]).length + ' papers uploaded'"></div>
+                <div style="font-size:13px;font-weight:500" x-text="name"></div>
+                <div style="font-size:11px;color:var(--t2)" x-text="(c.papers||[]).length + ' papers uploaded'"></div>
               </div>
             </div>
           </template>
         </div>
       </div>
 
-      <!-- Gap Analysis -->
-      <div class="card" style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div class="card-title" style="margin-bottom:0">🚨 Gap Analysis</div>
-          <button class="btn btn-primary btn-sm" @click="runGapAnalysis()" :disabled="gapLoading || Object.keys(project?.papers||{}).length===0">
-            <span x-show="gapLoading" class="spinner" style="width:12px;height:12px"></span>
+      <div class="card">
+        <div class="section-head">
+          <div class="card-title" style="margin-bottom:0">Research Gap Analysis</div>
+          <button class="btn btn-primary btn-sm"
+                  @click="runGapAnalysis()"
+                  :disabled="gapLoading || Object.keys(project?.papers||{}).length === 0">
+            <span x-show="gapLoading" class="spinner"></span>
             <span x-show="!gapLoading">Run Analysis</span>
           </button>
         </div>
@@ -734,133 +1351,179 @@ html, body { height: 100%; background: var(--bg0); color: var(--text0); font-fam
           <div class="md-content" x-html="renderMd(gapResult)"></div>
         </template>
         <template x-if="!gapResult">
-          <p style="font-size:12px;color:var(--text2)">Click "Run Analysis" to identify gaps and contradictions in your literature review.</p>
+          <div class="empty-state" style="padding:32px">
+            <div class="empty-state-icon">🔍</div>
+            <div class="empty-state-title">No analysis run yet</div>
+            <div class="empty-state-sub">Click Run Analysis to identify contradictions, unexplored areas, and methodological gaps across your library.</div>
+          </div>
         </template>
       </div>
     </div>
 
     <!-- ─── KNOWLEDGE GRAPH ─── -->
-    <div x-show="project && tab==='graph'" style="height:calc(100vh - 108px);padding:16px;display:flex;flex-direction:column">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-shrink:0">
+    <div class="panel-col" x-show="project && tab==='graph'">
+      <div class="kg-header">
         <div>
-          <div style="font-size:13px;font-weight:700">Knowledge Graph</div>
-          <div style="font-size:11px;color:var(--text2)">Papers connected by shared research topics</div>
+          <div style="font-size:14px;font-weight:600">Knowledge Graph</div>
+          <div style="font-size:11px;color:var(--t1);margin-top:2px">Drag to rearrange · Scroll to zoom · Click to inspect</div>
         </div>
-        <button class="btn btn-ghost btn-sm" style="margin-left:auto" @click="renderGraph()">↺ Refresh</button>
+        <div style="margin-left:auto;display:flex;gap:16px;align-items:center">
+          <div class="kg-legend">
+            <div class="kg-legend-item">
+              <div class="kg-legend-dot" style="background:var(--blue2);border-radius:3px;width:10px;height:10px"></div>
+              Paper
+            </div>
+            <div class="kg-legend-item">
+              <div class="kg-legend-dot" style="background:var(--purple)"></div>
+              Topic
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--t2);font-family:var(--mono)">
+            <span x-text="Object.keys(project?.papers||{}).length"></span>p ·
+            <span x-text="stats.topics||0"></span>t
+          </div>
+          <span x-show="graphSelectedNode" style="font-size:11px;color:var(--blue2);font-family:var(--mono)" x-text="'› '+graphSelectedNode"></span>
+          <button class="btn btn-ghost btn-sm" @click="renderGraph()">↺ Refresh</button>
+        </div>
       </div>
-      <div style="flex:1;position:relative;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg0)">
+      <div class="kg-body">
         <div id="kg-canvas"></div>
-      </div>
-      <div class="kg-legend" style="margin-top:10px;flex-shrink:0">
-        <div class="kg-legend-item"><div class="kg-dot" style="background:#6366f1"></div>Paper</div>
-        <div class="kg-legend-item"><div class="kg-dot" style="background:#a855f7"></div>Topic</div>
+        <div x-show="Object.keys(project?.papers||{}).length===0"
+             style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+          <div class="empty-state">
+            <div class="empty-state-icon">◈</div>
+            <div class="empty-state-title">No graph data</div>
+            <div class="empty-state-sub">Upload and analyse papers to build the knowledge graph</div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- ─── DIAGRAMS ─── -->
-    <div class="content" x-show="project && tab==='visuals'">
-      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end">
-        <div>
-          <label class="label">Paper</label>
-          <select class="input" style="width:240px" x-model="diagramHash">
-            <option value="">All papers (overview)</option>
-            <template x-for="(p, hash) in (project?.papers||{})" :key="hash">
-              <option :value="hash" x-text="(p.title||p.file_name).slice(0,45)"></option>
-            </template>
-          </select>
-        </div>
-        <div>
-          <label class="label">Diagram Type</label>
-          <select class="input" style="width:160px" x-model="diagramType">
-            <option value="flowchart">Flowchart</option>
-            <option value="mindmap">Mind Map</option>
-            <option value="timeline">Timeline</option>
-            <option value="concept">Concept Map</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" @click="generateDiagram()" :disabled="diagramLoading || Object.keys(project?.papers||{}).length===0">
-          <span x-show="diagramLoading" class="spinner" style="width:14px;height:14px"></span>
-          <span x-show="!diagramLoading">⚡ Generate Diagram</span>
-        </button>
-        <button class="btn btn-ghost" x-show="diagramCode" @click="copyDiagram()">⊞ Copy Mermaid</button>
-      </div>
-
-      <template x-if="diagramLoading">
-        <div class="mermaid-container" style="min-height:300px">
-          <div style="text-align:center;color:var(--text2)">
-            <div class="spinner" style="margin:0 auto 12px"></div>
-            <div style="font-size:12px">Generating diagram with AI…</div>
+    <div class="panel-col" x-show="project && tab==='visuals'">
+      <div class="diagram-header">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+          <div>
+            <label class="label">Paper</label>
+            <select class="input input-mono" style="width:260px;padding:7px 10px;font-size:11px" x-model="diagramHash">
+              <option value="">All papers — project overview</option>
+              <template x-for="(p,hash) in (project?.papers||{})" :key="hash">
+                <option :value="hash" x-text="(p.title||p.file_name).slice(0,60)"></option>
+              </template>
+            </select>
+          </div>
+          <div>
+            <label class="label">Type</label>
+            <div style="display:flex;gap:5px">
+              <template x-for="dt in [{v:'flowchart',l:'Flowchart'},{v:'mindmap',l:'Mind Map'},{v:'timeline',l:'Timeline'},{v:'concept',l:'Concept Map'}]" :key="dt.v">
+                <button class="btn btn-sm"
+                        :class="diagramType===dt.v?'btn-primary':'btn-ghost'"
+                        @click="diagramType=dt.v"
+                        x-text="dt.l"></button>
+              </template>
+            </div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:6px;align-items:flex-end">
+            <button class="btn btn-primary"
+                    @click="generateDiagram()"
+                    :disabled="diagramLoading||Object.keys(project?.papers||{}).length===0">
+              <span x-show="diagramLoading" class="spinner"></span>
+              <span x-show="!diagramLoading">Generate</span>
+            </button>
+            <button class="btn btn-ghost" x-show="diagramCode" @click="copyDiagram()">Copy code</button>
+            <button class="btn btn-ghost" x-show="diagramCode"
+                    @click="diagramCode='';document.getElementById('mermaid-output').innerHTML=''">Clear</button>
           </div>
         </div>
-      </template>
-
-      <template x-if="diagramCode && !diagramLoading">
-        <div>
-          <div class="mermaid-container" id="mermaid-output"></div>
-          <details style="margin-top:12px">
-            <summary style="font-size:11px;color:var(--text2);cursor:pointer;padding:6px 0">View Mermaid Source</summary>
-            <pre style="background:var(--bg0);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text1);overflow-x:auto;margin-top:8px" x-text="diagramCode"></pre>
-          </details>
+        <div style="margin-top:8px;font-size:11px;color:var(--t2)">
+          <span x-show="!diagramCode&&!diagramLoading">Select a paper and type, then Generate. The output is fully scrollable in both axes.</span>
+          <span x-show="diagramCode&&!diagramLoading" style="color:var(--green)">Rendered successfully — scroll to explore · Code compatible with Obsidian, Notion, GitHub</span>
+          <span x-show="diagramLoading" style="color:var(--blue2)">Generating — AI is reading the paper and producing diagram syntax…</span>
         </div>
-      </template>
+      </div>
 
-      <template x-if="!diagramCode && !diagramLoading">
-        <div class="empty-state" style="padding:64px">
-          <div class="empty-icon">⚡</div>
-          <div class="empty-title">Generate Visual Diagrams</div>
-          <div class="empty-sub">AI will create flowcharts, mind maps, and concept diagrams from your papers</div>
+      <div class="diagram-canvas" style="position:relative">
+        <div x-show="diagramLoading"
+             style="position:absolute;inset:0;z-index:5;background:rgba(13,17,23,.85);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px">
+          <div class="spinner" style="width:24px;height:24px;border-width:2px"></div>
+          <div style="font-size:13px;color:var(--t1)">Generating diagram…</div>
         </div>
-      </template>
+        <div x-show="!diagramCode&&!diagramLoading"
+             style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+          <div class="empty-state">
+            <div class="empty-state-icon">◇</div>
+            <div class="empty-state-title">Generate a visual diagram</div>
+            <div class="empty-state-sub">Select a paper and diagram type above, then click Generate. AI reads the paper and produces a scrollable visual.</div>
+          </div>
+        </div>
+        <div id="mermaid-output"></div>
+      </div>
+
+      <div class="diagram-source" x-show="diagramCode&&!diagramLoading">
+        <details>
+          <summary style="padding:8px 20px;font-size:11px;color:var(--t2);cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;user-select:none">
+            <span>▸</span> Mermaid source code
+            <span style="margin-left:auto;font-size:10px">Works in Obsidian · Notion · GitHub · VS Code</span>
+          </summary>
+          <pre style="margin:0;padding:10px 20px 14px;font-family:var(--mono);font-size:10px;color:var(--t1);overflow-x:auto;max-height:160px;border-top:1px solid var(--border)" x-text="diagramCode"></pre>
+        </details>
+      </div>
     </div>
 
-  </main>
-</div>
+  </div><!-- /panels -->
+</main>
+</div><!-- /shell -->
 
-<!-- ══════════ MODALS ══════════ -->
+<!-- ==================== MODALS ==================== -->
 
-<!-- Create Project Modal -->
+<!-- Create Project -->
 <div class="modal-overlay" x-show="showCreateProject" x-cloak @click.self="showCreateProject=false">
   <div class="modal" @click.stop>
     <div class="modal-header">
-      <div class="modal-title">✦ New Research Project</div>
-      <div class="modal-sub">Create a shared workspace for your team</div>
+      <div class="modal-title">New Research Project</div>
+      <div class="modal-subtitle">Create a shared workspace for you and your team</div>
     </div>
-    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+    <div class="modal-body">
       <div>
-        <label class="label">Project Name *</label>
-        <input class="input" placeholder="e.g. Transformer Architectures Review" x-model="newProject.name"/>
+        <label class="label">Project name *</label>
+        <input class="input" placeholder="e.g. Transformer Architectures Survey" x-model="newProject.name"/>
       </div>
       <div>
-        <label class="label">Problem Statement *</label>
-        <textarea class="input textarea" placeholder="What research problem is your team trying to solve?" x-model="newProject.problem_statement"></textarea>
+        <label class="label">Research problem statement *</label>
+        <textarea class="input textarea" placeholder="Describe the research question your team is investigating…" x-model="newProject.problem_statement"></textarea>
       </div>
       <div>
-        <label class="label">Your Name</label>
+        <label class="label">Your name</label>
         <input class="input" placeholder="e.g. Alice" x-model="newProject.created_by"/>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" @click="showCreateProject=false">Cancel</button>
-      <button class="btn btn-primary" @click="createProject()" :disabled="!newProject.name || !newProject.problem_statement">Create Project →</button>
+      <button class="btn btn-primary" @click="createProject()"
+              :disabled="!newProject.name||!newProject.problem_statement">
+        Create project →
+      </button>
     </div>
   </div>
 </div>
 
-<!-- Upload Modal -->
+<!-- Upload -->
 <div class="modal-overlay" x-show="showUpload" x-cloak @click.self="showUpload=false">
   <div class="modal" @click.stop>
     <div class="modal-header">
-      <div class="modal-title">↑ Upload Research Papers</div>
-      <div class="modal-sub">PDF files will be parsed, chunked, and embedded automatically</div>
+      <div class="modal-title">Upload Research Papers</div>
+      <div class="modal-subtitle">PDFs are parsed, chunked, and embedded into the vector store automatically</div>
     </div>
     <div class="modal-body">
-      <div class="upload-zone" :class="{drag: isDragging}"
+      <div class="upload-zone" :class="{'drag-over':isDragging}"
            @dragover.prevent="isDragging=true" @dragleave="isDragging=false"
-           @drop.prevent="onDrop($event); showUpload=false" @click="$refs.fileInput2.click()">
-        <input type="file" x-ref="fileInput2" accept=".pdf" multiple style="display:none" @change="onFileInput($event); showUpload=false"/>
-        <div class="upload-icon">📄</div>
-        <div class="upload-title">Drop PDFs here or click to browse</div>
-        <div class="upload-sub">Multiple files · PDF format only</div>
+           @drop.prevent="onDrop($event);showUpload=false"
+           @click="$refs.fileInput2.click()">
+        <input type="file" x-ref="fileInput2" accept=".pdf" multiple style="display:none"
+               @change="onFileInput($event);showUpload=false"/>
+        <div class="upload-zone-icon">📄</div>
+        <div class="upload-zone-title">Drop PDF files here or click to browse</div>
+        <div class="upload-zone-sub">Multiple files supported · PDF only</div>
       </div>
     </div>
     <div class="modal-footer">
@@ -872,57 +1535,52 @@ html, body { height: 100%; background: var(--bg0); color: var(--text0); font-fam
 <!-- Toast -->
 <div x-show="toast.show" class="toast" :class="'toast-'+toast.type" x-text="toast.msg" x-cloak></div>
 
-<!-- ══════════ ALPINE APP ══════════ -->
+<!-- ==================== ALPINE APP ==================== -->
 <script>
 function app() {
   return {
     // State
-    tab: 'dashboard',
+    tab: 'home',
     projects: [],
     activePid: '',
     project: null,
     stats: {},
     username: 'researcher',
 
-    // Paper
     selectedHash: null,
     selectedPaper: null,
     analysing: false,
     newAnnotation: '',
 
-    // Chat
     chatInput: '',
     chatLoading: false,
     useWebSearch: false,
 
-    // Upload
     isDragging: false,
     uploadQueue: [],
     showUpload: false,
 
-    // Compare
     compareSelected: [],
     comparing: false,
     compareResult: null,
 
-    // Insights
     gapLoading: false,
     gapResult: null,
 
-    // Diagram
+    graphSelectedNode: '',
+    _kgNetwork: null,
+    _kgObserver: null,
+
     diagramHash: '',
     diagramType: 'flowchart',
     diagramLoading: false,
     diagramCode: '',
 
-    // Modals
     showCreateProject: false,
-    newProject: { name: '', problem_statement: '', created_by: 'researcher' },
-
-    // Toast
+    newProject: { name: '', problem_statement: '', created_by: '' },
     toast: { show: false, msg: '', type: 'success' },
 
-    // ── INIT ──
+    // ── Init ──────────────────────────────────────────────────────────
     async init() {
       await this.loadProjects();
       if (this.projects.length > 0) {
@@ -932,8 +1590,12 @@ function app() {
     },
 
     async loadProjects() {
-      const r = await fetch('/api/projects');
-      this.projects = await r.json();
+      try {
+        const r = await fetch('/api/projects');
+        this.projects = await r.json();
+      } catch(e) {
+        this.projects = [];
+      }
     },
 
     async onProjectChange() {
@@ -945,7 +1607,10 @@ function app() {
       this.compareResult = null;
       this.gapResult = null;
       this.diagramCode = '';
+      const el = document.getElementById('mermaid-output');
+      if (el) el.innerHTML = '';
       await this.loadStats();
+      if (this.tab === 'home') this.tab = 'dashboard';
     },
 
     async loadStats() {
@@ -955,6 +1620,7 @@ function app() {
     },
 
     async refreshProject() {
+      if (!this.activePid) return;
       const r = await fetch(`/api/projects/${this.activePid}`);
       this.project = await r.json();
       if (this.selectedHash) {
@@ -963,87 +1629,96 @@ function app() {
       await this.loadStats();
     },
 
-    // ── PROJECT ──
+    // ── Project ──────────────────────────────────────────────────────
     async createProject() {
       if (!this.newProject.name || !this.newProject.problem_statement) return;
+      const body = {
+        ...this.newProject,
+        created_by: this.newProject.created_by || this.username
+      };
       const r = await fetch('/api/projects', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({...this.newProject, created_by: this.newProject.created_by || this.username})
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
       });
       const proj = await r.json();
       this.showCreateProject = false;
-      this.newProject = { name: '', problem_statement: '', created_by: 'researcher' };
+      this.newProject = { name: '', problem_statement: '', created_by: '' };
       await this.loadProjects();
       this.activePid = proj.id;
       await this.onProjectChange();
-      this.showToast('Project created!', 'success');
+      this.showToast('Project created successfully', 'success');
     },
 
-    // ── UPLOAD ──
+    // ── Upload ──────────────────────────────────────────────────────
     async onDrop(e) {
       this.isDragging = false;
       const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.pdf'));
       await this.uploadFiles(files);
     },
     async onFileInput(e) {
-      const files = Array.from(e.target.files);
-      await this.uploadFiles(files);
+      await this.uploadFiles(Array.from(e.target.files));
       e.target.value = '';
     },
     async uploadFiles(files) {
       if (!this.activePid) { this.showToast('Select a project first', 'error'); return; }
-
       for (const file of files) {
-        const item = { name: file.name, status: 'Uploading…', pct: 20 };
+        const item = { name: file.name, status: 'Uploading…', pct: 15 };
         this.uploadQueue.push(item);
-
         try {
           const fd = new FormData();
           fd.append('file', file);
-          item.pct = 50; item.status = 'Processing…';
-
-          const r = await fetch(`/api/projects/${this.activePid}/papers/upload?username=${encodeURIComponent(this.username)}`, {
-            method: 'POST', body: fd
-          });
+          item.pct = 40; item.status = 'Processing…';
+          const r = await fetch(
+            `/api/projects/${this.activePid}/papers/upload?username=${encodeURIComponent(this.username)}`,
+            { method: 'POST', body: fd }
+          );
           const result = await r.json();
-
           item.pct = 100;
           if (result.status === 'success') {
-            item.status = `✓ ${result.chunks} chunks`;
-            this.showToast(`"${result.title}" uploaded!`, 'success');
+            item.status = `✓ ${result.chunks} chunks indexed`;
+            this.showToast(`"${result.title}" uploaded`, 'success');
           } else if (result.status === 'skipped') {
-            item.status = 'Already exists';
+            item.status = 'Already exists in project';
           } else {
-            item.status = `Error: ${result.reason||'unknown'}`;
-            this.showToast('Upload failed: ' + (result.reason||'unknown'), 'error');
+            item.status = `Failed: ${result.reason || 'unknown error'}`;
+            this.showToast('Upload failed: ' + (result.reason || 'unknown'), 'error');
           }
-        } catch(err) {
+        } catch (err) {
           item.status = 'Network error';
-          this.showToast('Upload failed', 'error');
+          this.showToast('Upload failed — check connection', 'error');
         }
       }
-
       await this.refreshProject();
-      setTimeout(() => { this.uploadQueue = []; }, 3000);
+      setTimeout(() => { this.uploadQueue = []; }, 4000);
     },
 
-    // ── PAPER ACTIONS ──
+    // ── Paper actions ─────────────────────────────────────────────────
     async analysePaper() {
       if (!this.selectedHash) return;
       this.analysing = true;
+      this.showToast('Analysing paper — this may take 30–90 seconds', 'info');
       try {
-        const r = await fetch(`/api/projects/${this.activePid}/papers/${this.selectedHash}/summarize`, { method: 'POST' });
+        const r = await fetch(
+          `/api/projects/${this.activePid}/papers/${this.selectedHash}/summarize`,
+          { method: 'POST' }
+        );
         const data = await r.json();
+        if (!r.ok) {
+          this.showToast('Analysis failed: ' + (data.detail || data.error || r.status), 'error');
+          this.analysing = false;
+          return;
+        }
         await this.refreshProject();
-        this.showToast('Analysis complete!', 'success');
-      } catch(e) {
-        this.showToast('Analysis failed', 'error');
+        this.showToast('Analysis complete', 'success');
+      } catch (e) {
+        this.showToast('Analysis failed: ' + e.message, 'error');
       }
       this.analysing = false;
     },
 
     async deletePaper() {
-      if (!this.selectedHash || !confirm('Delete this paper?')) return;
+      if (!this.selectedHash || !confirm('Delete this paper and all its data?')) return;
       await fetch(`/api/projects/${this.activePid}/papers/${this.selectedHash}`, { method: 'DELETE' });
       this.selectedHash = null;
       this.selectedPaper = null;
@@ -1053,51 +1728,56 @@ function app() {
 
     async addAnnotation() {
       if (!this.newAnnotation.trim() || !this.selectedHash) return;
-      await fetch(`/api/projects/${this.activePid}/papers/${this.selectedHash}/annotations`, {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ username: this.username, text: this.newAnnotation.trim() })
-      });
+      await fetch(
+        `/api/projects/${this.activePid}/papers/${this.selectedHash}/annotations`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: this.username, text: this.newAnnotation.trim() })
+        }
+      );
       this.newAnnotation = '';
       await this.refreshProject();
     },
 
     async deleteAnnotation(annId) {
-      await fetch(`/api/projects/${this.activePid}/papers/${this.selectedHash}/annotations/${annId}`, { method: 'DELETE' });
+      await fetch(
+        `/api/projects/${this.activePid}/papers/${this.selectedHash}/annotations/${annId}`,
+        { method: 'DELETE' }
+      );
       await this.refreshProject();
     },
 
-    // ── CHAT ──
+    // ── Chat ─────────────────────────────────────────────────────────
     async sendChat() {
       const q = this.chatInput.trim();
       if (!q || this.chatLoading) return;
       this.chatInput = '';
       this.chatLoading = true;
-
       try {
-        const r = await fetch(`/api/projects/${this.activePid}/chat`, {
-          method: 'POST', headers: {'Content-Type':'application/json'},
+        await fetch(`/api/projects/${this.activePid}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: q, username: this.username, use_web: this.useWebSearch })
         });
-        await r.json();
         await this.refreshProject();
-        this.$nextTick(() => {
-          const el = this.$refs.chatScroll;
-          if (el) el.scrollTop = el.scrollHeight;
-        });
-      } catch(e) {
-        this.showToast('Chat error', 'error');
+        await this.$nextTick();
+        const el = this.$refs.chatScroll;
+        if (el) el.scrollTop = el.scrollHeight;
+      } catch (e) {
+        this.showToast('Chat error — try again', 'error');
       }
       this.chatLoading = false;
     },
 
-    // ── INSIGHTS ──
+    // ── Insights ─────────────────────────────────────────────────────
     async runGapAnalysis() {
       this.gapLoading = true;
       try {
         const r = await fetch(`/api/projects/${this.activePid}/analyze/gaps`, { method: 'POST' });
         const data = await r.json();
         this.gapResult = data.analysis;
-      } catch(e) {
+      } catch (e) {
         this.showToast('Analysis failed', 'error');
       }
       this.gapLoading = false;
@@ -1108,124 +1788,198 @@ function app() {
       this.comparing = true;
       try {
         const r = await fetch(`/api/projects/${this.activePid}/analyze/compare`, {
-          method: 'POST', headers: {'Content-Type':'application/json'},
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ doc_hashes: this.compareSelected })
         });
         const data = await r.json();
         this.compareResult = data.comparison;
         this.compareSelected = [];
-      } catch(e) {
-        this.showToast('Compare failed', 'error');
+      } catch (e) {
+        this.showToast('Comparison failed', 'error');
       }
       this.comparing = false;
     },
 
-    // ── DIAGRAMS ──
+    // ── Diagrams ─────────────────────────────────────────────────────
     async generateDiagram() {
       this.diagramLoading = true;
       this.diagramCode = '';
+      const el = document.getElementById('mermaid-output');
+      if (el) el.innerHTML = '';
       try {
         const r = await fetch(`/api/projects/${this.activePid}/generate/diagram`, {
-          method: 'POST', headers: {'Content-Type':'application/json'},
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ doc_hash: this.diagramHash || null, diagram_type: this.diagramType })
         });
         const data = await r.json();
+        if (!r.ok) {
+          this.diagramLoading = false;
+          this.showToast('Generation failed: ' + (data.detail || r.status), 'error');
+          return;
+        }
         this.diagramCode = data.diagram;
+        this.diagramLoading = false;
         await this.$nextTick();
+        await new Promise(res => setTimeout(res, 80));
         await this.renderMermaid();
-      } catch(e) {
-        this.showToast('Diagram generation failed', 'error');
+      } catch (e) {
+        this.diagramLoading = false;
+        this.showToast('Diagram error: ' + e.message, 'error');
       }
-      this.diagramLoading = false;
     },
 
     async renderMermaid() {
       const el = document.getElementById('mermaid-output');
-      if (!el || !this.diagramCode || !window.mermaid) return;
+      if (!el || !this.diagramCode) return;
+      let tries = 0;
+      while (!window.mermaid && tries < 20) {
+        await new Promise(r => setTimeout(r, 100));
+        tries++;
+      }
+      if (!window.mermaid) {
+        el.innerHTML = '<div style="color:var(--red);padding:24px;font-family:var(--mono)">Mermaid library failed to load.</div>';
+        return;
+      }
       try {
         el.innerHTML = '';
-        const id = 'mermaid-' + Date.now();
+        const id = 'mm-' + Date.now();
         const { svg } = await window.mermaid.render(id, this.diagramCode);
         el.innerHTML = svg;
-      } catch(e) {
-        el.innerHTML = `<div style="color:var(--red);font-size:12px;padding:16px">Diagram render error: ${e.message}<br><br>Raw code:<br><pre style="margin-top:8px;font-size:10px">${this.diagramCode}</pre></div>`;
+        const svgEl = el.querySelector('svg');
+        if (svgEl) {
+          svgEl.style.maxWidth = 'none';
+          svgEl.style.height = 'auto';
+          svgEl.removeAttribute('width');
+        }
+      } catch (e) {
+        const escaped = this.diagramCode.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        el.innerHTML = `
+          <div style="padding:28px;max-width:640px">
+            <div style="color:var(--red);font-size:12px;font-weight:600;margin-bottom:8px;font-family:var(--mono)">Render error: ${e.message}</div>
+            <p style="color:var(--t2);font-size:11px;margin-bottom:12px">The raw Mermaid code is shown below — you can paste it into <a href="https://mermaid.live" target="_blank" style="color:var(--blue2)">mermaid.live</a> to debug.</p>
+            <pre style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:14px;font-family:var(--mono);font-size:10px;color:var(--t1);white-space:pre-wrap;overflow-x:auto">${escaped}</pre>
+          </div>`;
       }
     },
 
     copyDiagram() {
       navigator.clipboard.writeText(this.diagramCode);
-      this.showToast('Mermaid code copied!', 'success');
+      this.showToast('Mermaid code copied to clipboard', 'success');
     },
 
-    // ── GRAPH ──
+    // ── Knowledge Graph ───────────────────────────────────────────────
     async renderGraph() {
       if (!this.activePid || this.tab !== 'graph') return;
+      if (this._kgObserver) { this._kgObserver.disconnect(); this._kgObserver = null; }
       try {
         const r = await fetch(`/api/projects/${this.activePid}/knowledge-graph`);
         const { nodes, edges } = await r.json();
-
-        const container = document.getElementById('kg-canvas');
-        if (!container) return;
-
+        const canvas = document.getElementById('kg-canvas');
+        if (!canvas) return;
+        // Poll until canvas has real dimensions (x-show transition may delay this)
+        let waited = 0;
+        while (canvas.clientWidth < 10 && waited < 3000) {
+          await new Promise(res => setTimeout(res, 50));
+          waited += 50;
+        }
+        if (nodes.length === 0) return;
+        const isPaper = n => n.group === 'paper';
         const visNodes = new vis.DataSet(nodes.map(n => ({
-          id: n.id, label: n.label,
-          color: n.group === 'paper'
-            ? { background: '#6366f1', border: '#818cf8', highlight: { background: '#818cf8', border: '#a5b4fc' } }
-            : { background: '#2d1f47', border: '#a855f7', highlight: { background: '#a855f7', border: '#c084fc' } },
-          font: { color: '#e6edf3', size: n.group === 'paper' ? 13 : 11 },
-          shape: n.group === 'paper' ? 'box' : 'dot',
-          size: n.group === 'paper' ? 20 : 12,
-          borderWidth: 2,
-          title: n.title || n.label,
+          id: n.id,
+          label: isPaper(n) ? (n.label.length > 28 ? n.label.slice(0,26)+'…' : n.label) : n.label,
+          color: isPaper(n)
+            ? { background:'#1e3a5f', border:'#3b82f6', highlight:{background:'#1d4ed8',border:'#60a5fa'}, hover:{background:'#1e40af',border:'#60a5fa'} }
+            : { background:'#3b0764', border:'#a855f7', highlight:{background:'#6b21a8',border:'#c084fc'}, hover:{background:'#6b21a8',border:'#c084fc'} },
+          font: { color:'#f0f6fc', size: isPaper(n)?13:11, face:'Inter, sans-serif' },
+          shape: isPaper(n) ? 'box' : 'ellipse',
+          size: isPaper(n) ? 20 : 12,
+          borderWidth: isPaper(n) ? 2 : 1.5,
+          margin: isPaper(n) ? 8 : 5,
+          shadow: { enabled:true, color: isPaper(n)?'rgba(59,130,246,.25)':'rgba(168,85,247,.25)', size:8, x:0, y:2 },
+          title: `<div style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:8px 11px;font-family:Inter,sans-serif;font-size:12px;color:#f0f6fc;max-width:220px;line-height:1.5">${n.title||n.label}</div>`,
         })));
-
-        const visEdges = new vis.DataSet(edges.map((e, i) => ({
+        const visEdges = new vis.DataSet(edges.map((e,i) => ({
           id: i, from: e.from, to: e.to,
-          color: { color: '#30363d', highlight: '#6366f1' },
-          width: 1.5, smooth: { type: 'cubicBezier' }
+          color: { color:'#30363d', highlight:'#3b82f6', hover:'#60a5fa', opacity:0.85 },
+          width: 1.5, hoverWidth: 2.5, selectionWidth: 3,
+          smooth: { type:'curvedCW', roundness:0.1 },
+          arrows: { to: { enabled: false } },
         })));
-
-        new vis.Network(container, { nodes: visNodes, edges: visEdges }, {
-          physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -50, springLength: 120 }, stabilization: { iterations: 150 } },
-          interaction: { hover: true, tooltipDelay: 200 },
-          layout: { improvedLayout: true }
+        if (this._kgNetwork) { this._kgNetwork.destroy(); this._kgNetwork = null; }
+        const network = new vis.Network(canvas, { nodes: visNodes, edges: visEdges }, {
+          physics: {
+            enabled: true,
+            solver: 'forceAtlas2Based',
+            forceAtlas2Based: { gravitationalConstant:-70, centralGravity:0.01, springLength:160, springConstant:0.05, damping:0.4 },
+            stabilization: { iterations:250, updateInterval:25 },
+          },
+          interaction: { hover:true, tooltipDelay:120, navigationButtons:true, keyboard:false, zoomView:true, dragView:true },
+          layout: { improvedLayout:true, randomSeed:42 },
         });
-      } catch(e) {
+        this._kgNetwork = network;
+        network.on('click', params => {
+          if (params.nodes.length > 0) {
+            const node = visNodes.get(params.nodes[0]);
+            this.graphSelectedNode = node ? node.label : '';
+          } else {
+            this.graphSelectedNode = '';
+          }
+        });
+        network.on('stabilizationIterationsDone', () => {
+          network.fit({ animation: { duration:600, easingFunction:'easeInOutQuad' } });
+        });
+        this._kgObserver = new ResizeObserver(() => {
+          if (this._kgNetwork) { this._kgNetwork.redraw(); this._kgNetwork.fit({ animation:false }); }
+        });
+        this._kgObserver.observe(canvas);
+      } catch (e) {
         console.error('Graph render failed:', e);
+        this.showToast('Knowledge graph failed: ' + e.message, 'error');
       }
     },
 
-    // ── HELPERS ──
+    // ── Helpers ──────────────────────────────────────────────────────
     renderMd(text) {
       if (!text) return '';
       return marked.parse(text);
     },
 
     tabLabel() {
-      const labels = { dashboard: 'Dashboard', library: 'Paper Library', chat: 'Research Chat', insights: 'Insights & Gaps', graph: 'Knowledge Graph', visuals: 'Diagram Generator' };
+      const labels = {
+        home:      'Getting Started',
+        dashboard: 'Dashboard',
+        library:   'Paper Library',
+        chat:      'Research Chat',
+        insights:  'Insights & Gap Analysis',
+        graph:     'Knowledge Graph',
+        visuals:   'Diagram Generator',
+      };
       return labels[this.tab] || '';
     },
 
     initials(name) {
       if (!name) return '?';
-      return name.split(' ').slice(0,2).map(w => w[0]?.toUpperCase()||'').join('');
+      return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('');
     },
 
     avatarColor(name) {
-      const colors = ['#6366f1','#a855f7','#3b82f6','#22c55e','#f59e0b','#ef4444','#ec4899'];
+      const palette = ['#2563eb','#16a34a','#9333ea','#ea580c','#dc2626','#0891b2','#d97706'];
       let h = 0;
-      for (const c of (name||'')) h = (h * 31 + c.charCodeAt(0)) % colors.length;
-      return colors[Math.abs(h)];
+      for (const c of (name || '')) h = (h * 31 + c.charCodeAt(0)) % palette.length;
+      return palette[Math.abs(h)];
     },
 
     autoResize(e) {
-      e.target.style.height = 'auto';
-      e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+      const el = e.target;
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
     },
 
-    showToast(msg, type='success') {
+    showToast(msg, type = 'success') {
       this.toast = { show: true, msg, type };
-      setTimeout(() => { this.toast.show = false; }, 3000);
+      setTimeout(() => { this.toast.show = false; }, 3800);
     },
   };
 }

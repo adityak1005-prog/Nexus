@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)  # override=True ensures .env changes are always picked up
 
 app = FastAPI(title="Nexus Research Platform", version="2.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -24,6 +24,17 @@ templates = Jinja2Templates(directory="templates")
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+# ── Health / config check ──────────────────────────────────────────────────────
+@app.get("/api/health")
+def health():
+    google_key = os.getenv("GOOGLE_API_KEY", "")
+    return {
+        "status": "ok",
+        "google_api_key_set": bool(google_key),
+        "google_api_key_preview": (google_key[:8] + "…") if google_key else "NOT SET",
+        "tavily_key_set": bool(os.getenv("TAVILY_API_KEY")),
+    }
 
 
 # ── Projects ───────────────────────────────────────────────────────────────────
@@ -117,9 +128,9 @@ async def list_papers(pid: str):
     return list_ingested_papers(pid)
 
 @app.post("/api/projects/{pid}/papers/{doc_hash}/summarize")
-async def summarize_paper_api(pid: str, doc_hash: str):
-    from projects import load_project, update_paper_status
-    from ingestion import get_full_text
+def summarize_paper_api(pid: str, doc_hash: str):
+    from projects import load_project, update_paper_status, update_project
+    from ingestion import get_full_text, extract_subtopics
     from analysis import summarize_paper, check_reliability
 
     proj = load_project(pid)
@@ -129,11 +140,22 @@ async def summarize_paper_api(pid: str, doc_hash: str):
     if not paper:
         raise HTTPException(404, "Paper not found")
 
-    ft = get_full_text(doc_hash, pid)
-    summary = summarize_paper(paper["title"], ft, proj["problem_statement"])
-    reliability = check_reliability(paper["title"], ft[:1200])
-    update_paper_status(proj, doc_hash, "summarized", summary=summary, reliability=reliability)
-    return {"summary": summary, "reliability": reliability}
+    try:
+        ft          = get_full_text(doc_hash, pid)
+        summary     = summarize_paper(paper["title"], ft, proj["problem_statement"])
+        reliability = check_reliability(paper["title"], ft[:1200])
+        subtopics   = extract_subtopics(paper["title"], ft)
+        update_paper_status(proj, doc_hash, "summarized", summary=summary, reliability=reliability)
+
+        # Save subtopics back to the project
+        proj = load_project(pid)
+        if proj and doc_hash in proj["papers"]:
+            proj["papers"][doc_hash]["subtopics"] = subtopics
+            update_project(proj)
+
+        return {"summary": summary, "reliability": reliability, "subtopics": subtopics}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/projects/{pid}/papers/{doc_hash}")
 async def delete_paper_api(pid: str, doc_hash: str):
@@ -178,7 +200,7 @@ class ChatMessage(BaseModel):
     use_web: bool = False
 
 @app.post("/api/projects/{pid}/chat")
-async def chat(pid: str, data: ChatMessage):
+def chat(pid: str, data: ChatMessage):
     from projects import load_project, add_chat_message
     from ingestion import query_papers
     from analysis import answer_with_rag, answer_with_agent, is_web_search_available
@@ -187,44 +209,49 @@ async def chat(pid: str, data: ChatMessage):
     if not proj:
         raise HTTPException(404)
 
-    add_chat_message(proj, data.username, data.message, msg_type="user")
-    proj = load_project(pid)
+    try:
+        add_chat_message(proj, data.username, data.message, msg_type="user")
+        proj = load_project(pid)
 
-    hits = query_papers(data.message, pid, n_results=5)
-    use_web = data.use_web and is_web_search_available()
+        hits = query_papers(data.message, pid, n_results=5)
+        use_web = data.use_web and is_web_search_available()
 
-    if use_web:
-        answer, web_sources = answer_with_agent(data.message, hits, proj["problem_statement"])
-        citations = web_sources
-    else:
-        answer = answer_with_rag(data.message, hits, proj["problem_statement"])
-        citations = [h["title"] or h["file_name"] for h in hits[:3]]
+        if use_web:
+            answer, web_sources = answer_with_agent(data.message, hits, proj["problem_statement"])
+            citations = web_sources
+        else:
+            answer = answer_with_rag(data.message, hits, proj["problem_statement"])
+            citations = [h["title"] or h["file_name"] for h in hits[:3]]
 
-    add_chat_message(proj, "Nexus AI", answer, citations=citations, msg_type="ai")
-    return {"answer": answer, "citations": citations, "sources": hits[:3], "web_used": use_web}
+        add_chat_message(proj, "Nexus AI", answer, citations=citations, msg_type="ai")
+        return {"answer": answer, "citations": citations, "sources": hits[:3], "web_used": use_web}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Analysis ───────────────────────────────────────────────────────────────────
 @app.post("/api/projects/{pid}/analyze/gaps")
-async def analyze_gaps(pid: str):
+def analyze_gaps(pid: str):
     from projects import load_project
     from analysis import detect_gaps
 
     proj = load_project(pid)
     if not proj:
         raise HTTPException(404)
-
-    papers_db = proj.get("papers", {})
-    covered = list({t for p in papers_db.values() for t in p.get("subtopics", [])})
-    summaries = [p["summary"] for p in papers_db.values() if p.get("summary")]
-    result = detect_gaps(proj["problem_statement"], covered, summaries)
-    return {"analysis": result}
+    try:
+        papers_db = proj.get("papers", {})
+        covered = list({t for p in papers_db.values() for t in p.get("subtopics", [])})
+        summaries = [p["summary"] for p in papers_db.values() if p.get("summary")]
+        result = detect_gaps(proj["problem_statement"], covered, summaries)
+        return {"analysis": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 class CompareRequest(BaseModel):
     doc_hashes: List[str]
 
 @app.post("/api/projects/{pid}/analyze/compare")
-async def compare_api(pid: str, data: CompareRequest):
+def compare_api(pid: str, data: CompareRequest):
     from projects import load_project
     from ingestion import get_full_text
     from analysis import compare_papers
@@ -234,14 +261,16 @@ async def compare_api(pid: str, data: CompareRequest):
         raise HTTPException(404)
     if len(data.doc_hashes) < 2:
         raise HTTPException(400, "Need at least 2 papers")
-
-    papers = []
-    for dh in data.doc_hashes:
-        p = proj["papers"].get(dh)
-        if p:
-            papers.append({"title": p["title"], "full_text": get_full_text(dh, pid)})
-    result = compare_papers(papers, proj["problem_statement"])
-    return {"comparison": result}
+    try:
+        papers = []
+        for dh in data.doc_hashes:
+            p = proj["papers"].get(dh)
+            if p:
+                papers.append({"title": p["title"], "full_text": get_full_text(dh, pid)})
+        result = compare_papers(papers, proj["problem_statement"])
+        return {"comparison": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Diagrams ───────────────────────────────────────────────────────────────────
@@ -250,7 +279,7 @@ class DiagramRequest(BaseModel):
     diagram_type: str = "flowchart"
 
 @app.post("/api/projects/{pid}/generate/diagram")
-async def generate_diagram_api(pid: str, data: DiagramRequest):
+def generate_diagram_api(pid: str, data: DiagramRequest):
     from projects import load_project
     from ingestion import get_full_text
     from analysis import generate_mermaid_diagram
@@ -258,18 +287,20 @@ async def generate_diagram_api(pid: str, data: DiagramRequest):
     proj = load_project(pid)
     if not proj:
         raise HTTPException(404)
+    try:
+        if data.doc_hash and data.doc_hash in proj.get("papers", {}):
+            paper = proj["papers"][data.doc_hash]
+            text = get_full_text(data.doc_hash, pid)
+            title = paper.get("title", "Paper")
+        else:
+            summaries = [p.get("summary", "") for p in proj.get("papers", {}).values() if p.get("summary")]
+            text = "\n\n".join(summaries[:3])
+            title = proj["name"]
 
-    if data.doc_hash and data.doc_hash in proj.get("papers", {}):
-        paper = proj["papers"][data.doc_hash]
-        text = get_full_text(data.doc_hash, pid)
-        title = paper.get("title", "Paper")
-    else:
-        summaries = [p.get("summary", "") for p in proj.get("papers", {}).values() if p.get("summary")]
-        text = "\n\n".join(summaries[:3])
-        title = proj["name"]
-
-    diagram = generate_mermaid_diagram(title, text[:4000], data.diagram_type)
-    return {"diagram": diagram, "type": data.diagram_type}
+        diagram = generate_mermaid_diagram(title, text[:4000], data.diagram_type)
+        return {"diagram": diagram, "type": data.diagram_type}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Knowledge Graph ────────────────────────────────────────────────────────────

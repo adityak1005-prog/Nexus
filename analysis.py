@@ -2,23 +2,38 @@
 analysis.py — AI functions (Gemini 2.5 Flash + optional Tavily web search)
 """
 import os, re
+from dotenv import load_dotenv
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage
 
 # ── LLM ────────────────────────────────────────────────────────────────────────
 _llm = None
+_llm_key = None  # Track which key the singleton was built with
+
 def get_llm():
-    global _llm
-    if _llm is None:
+    global _llm, _llm_key
+    current_key = os.getenv("GOOGLE_API_KEY", "")
+    if not current_key:
+        raise RuntimeError("GOOGLE_API_KEY is not set. Check your .env file.")
+    # Rebuild if key changed (e.g. after .env edit + server restart)
+    if _llm is None or _llm_key != current_key:
         _llm = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
             temperature=0,
-            google_api_key=os.getenv("GOOGLE_API_KEY"),
+            google_api_key=current_key,
         )
+        _llm_key = current_key
     return _llm
 
 def call_llm(prompt: str) -> str:
-    return get_llm().invoke([HumanMessage(content=prompt)]).content
+    try:
+        return get_llm().invoke([HumanMessage(content=prompt)]).content
+    except Exception as e:
+        err = str(e)
+        if "API_KEY_INVALID" in err or "api key not valid" in err.lower():
+            raise RuntimeError(f"Invalid Google API key — check your .env file. Detail: {err}")
+        raise RuntimeError(f"Gemini API error: {err}")
 
 
 # ── Tavily ─────────────────────────────────────────────────────────────────────

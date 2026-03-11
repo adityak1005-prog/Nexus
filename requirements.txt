@@ -1,41 +1,32 @@
-# Core
-fastapi>=0.111.0
-uvicorn[standard]>=0.30.0
-python-multipart>=0.0.9
-jinja2>=3.1.4
-python-dotenv>=1.0.1
-pydantic>=2.0.0
+# ── Web framework ──────────────────────────────────────────────────────────────
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+jinja2==3.1.4
+pydantic
 
-# PDF parsing
-pypdf>=4.0.0
-pdfminer.six>=20221105
-# Optional (better parsing for scanned/column PDFs — install separately if needed):
-# unstructured[pdf]>=0.14.0
+# ── AI / LLM + Embeddings (one key covers everything) ─────────────────────────
+# Gemini Flash → summarization, chat, gap analysis, diagrams
+# Gemini text-embedding-004 → vector embeddings for RAG (replaces sentence-transformers)
+langchain
+langchain-core
+langchain-google-genai    # covers both ChatGoogleGenerativeAI + GoogleGenerativeAIEmbeddings
+langchain-text-splitters
+langgraph
+google-generativeai>=0.8.3
 
-# LangChain stack
-langchain>=0.2.6
-langchain-core>=0.2.6
-langchain-community>=0.2.6
-langchain-google-genai>=2.0.0
-langchain-text-splitters>=0.2.2
-langgraph>=0.1.0
+# NOTE: No PyTorch, no sentence-transformers, no CUDA
+# Docker image: ~400MB vs ~3GB with local model. RAM: ~200MB vs ~900MB.
 
-# Embeddings — FastEmbed (ONNX, no PyTorch, ~40MB model download on first run)
-fastembed
+# ── Free cloud storage ─────────────────────────────────────────────────────────
+pinecone==5.4.2          # vector DB — 1 free index, 100K vectors
+supabase==2.10.0         # project/chat/annotation storage — 500MB free Postgres
 
-# Vector DB
-chromadb>=0.5.3
+# ── PDF parsing ────────────────────────────────────────────────────────────────
+pypdf==5.1.0
 
-# Web search — Tavily free tier (1000 searches/month, optional)
-# Get key at: app.tavily.com
-tavily-python>=0.3.3
-langchain-tavily>=0.1.0
+# ── Optional: web search in Research Chat ─────────────────────────────────────
+langchain-tavily==0.1.6
 
-# Observability — LangSmith free dev tier (optional)
-# Set LANGCHAIN_TRACING_V2=true and LANGCHAIN_API_KEY in .env
-langsmith>=0.1.0
-
-# Google Docs export (optional)
-google-auth>=2.29.0
-google-auth-oauthlib>=1.2.0
-google-api-python-client>=2.126.0
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dotenv==1.0.1

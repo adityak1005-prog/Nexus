@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.*
+!.env.example
+chroma_store/
+projects_data/
+*.pdf
+.git/
+.gitignore
+*.md
+venv/
+.venv/
+node_modules/

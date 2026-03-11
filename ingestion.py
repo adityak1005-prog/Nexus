@@ -1,58 +1,111 @@
 """
 ingestion.py — PDF pipeline
-Embedding:  FastEmbed (ONNX, BAAI/bge-small-en-v1.5)
-PDF parse:  pypdf (Unstructured as optional upgrade)
-Vector DB:  ChromaDB (cosine similarity)
+Embedding:  Gemini text-embedding-004 (API, no local model — zero RAM overhead)
+PDF parse:  pypdf
+Vector DB:  Pinecone (free tier — 1 index, 100K vectors)
+
+Why Gemini embeddings:
+- No PyTorch / sentence-transformers → Docker image drops from ~3GB to ~400MB
+- No RAM for model weights → app runs comfortably on 512MB free-tier hosts
+- text-embedding-004 produces 768-dim vectors (higher quality than bge-small-en 384-dim)
+- Included in the same GOOGLE_API_KEY already used for Gemini Flash — no new credentials
+- Free tier: 1500 embedding requests/day (each PDF ≈ 10-30 requests for its chunks)
 """
-import os, json, hashlib, time, logging
+import os, json, hashlib, logging, time
 from datetime import datetime
 
-import chromadb
-from chromadb.config import Settings
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from projects import get_chroma_collection_name
 
 load_dotenv()
 logging.getLogger("langsmith").setLevel(logging.WARNING)
 
-CHROMA_DIR    = "./chroma_store"
-EMBED_MODEL   = "BAAI/bge-small-en-v1.5"
-CHUNK_SIZE    = 900
-CHUNK_OVERLAP = 150
+EMBED_MODEL    = "models/text-embedding-004"   # 768-dim, free via Gemini API
+EMBED_DIM      = 768
+CHUNK_SIZE     = 900
+CHUNK_OVERLAP  = 150
+PINECONE_INDEX = os.getenv("PINECONE_INDEX", "nexus-papers")
 
-# ── FastEmbed ──────────────────────────────────────────────────────────────────
+# ── Gemini Embeddings ──────────────────────────────────────────────────────────
 _embedder = None
+
 def get_embedder():
     global _embedder
     if _embedder is None:
-        from sentence_transformers import SentenceTransformer
-        _embedder = SentenceTransformer("BAAI/bge-small-en-v1.5")
+        api_key = os.getenv("GOOGLE_API_KEY", "")
+        if not api_key:
+            raise RuntimeError("GOOGLE_API_KEY not set.")
+        _embedder = GoogleGenerativeAIEmbeddings(
+            model=EMBED_MODEL,
+            google_api_key=api_key,
+            task_type="retrieval_document",   # optimised for RAG indexing
+        )
     return _embedder
 
-# NEW (sentence-transformers syntax)
-def embed_texts(texts: list[str]) -> list[list[float]]:
-    return get_embedder().encode(texts, show_progress_bar=False).tolist()
-
-
-# ── ChromaDB ───────────────────────────────────────────────────────────────────
-_chroma_client = None
-def get_chroma_client():
-    global _chroma_client
-    if _chroma_client is None:
-        _chroma_client = chromadb.PersistentClient(
-            path=CHROMA_DIR,
-            settings=Settings(anonymized_telemetry=False)
+def embed_texts(texts: list[str], task: str = "retrieval_document") -> list[list[float]]:
+    """
+    Embed a list of texts using Gemini text-embedding-004.
+    task = "retrieval_document"  → for indexing chunks
+    task = "retrieval_query"     → for query-time embedding (better recall)
+    """
+    embedder = get_embedder()
+    # GoogleGenerativeAIEmbeddings supports task_type override per call
+    if task == "retrieval_query":
+        embedder = GoogleGenerativeAIEmbeddings(
+            model=EMBED_MODEL,
+            google_api_key=os.getenv("GOOGLE_API_KEY"),
+            task_type="retrieval_query",
         )
-    return _chroma_client
+    # embed_documents handles batching internally
+    return embedder.embed_documents(texts)
 
-def get_collection(pid):
-    return get_chroma_client().get_or_create_collection(
-        name=get_chroma_collection_name(pid),
-        metadata={"hnsw:space": "cosine"}
+def embed_query(query: str) -> list[float]:
+    """Single query embedding — uses retrieval_query task type for better recall."""
+    embedder = GoogleGenerativeAIEmbeddings(
+        model=EMBED_MODEL,
+        google_api_key=os.getenv("GOOGLE_API_KEY"),
+        task_type="retrieval_query",
     )
+    return embedder.embed_query(query)
+
+
+# ── Pinecone ───────────────────────────────────────────────────────────────────
+_pinecone_index = None
+
+def get_pinecone_index():
+    global _pinecone_index
+    if _pinecone_index is not None:
+        return _pinecone_index
+
+    api_key = os.getenv("PINECONE_API_KEY")
+    if not api_key:
+        raise RuntimeError("PINECONE_API_KEY not set.")
+
+    from pinecone import Pinecone, ServerlessSpec
+    pc = Pinecone(api_key=api_key)
+
+    # text-embedding-004 produces 768-dim vectors
+    existing = [i.name for i in pc.list_indexes()]
+    if PINECONE_INDEX not in existing:
+        pc.create_index(
+            name=PINECONE_INDEX,
+            dimension=EMBED_DIM,
+            metric="cosine",
+            spec=ServerlessSpec(cloud="aws", region="us-east-1")
+        )
+        while not pc.describe_index(PINECONE_INDEX).status["ready"]:
+            time.sleep(1)
+
+    _pinecone_index = pc.Index(PINECONE_INDEX)
+    return _pinecone_index
+
+
+def _namespace(pid: str) -> str:
+    """Each project gets its own Pinecone namespace — isolates papers per project."""
+    return get_chroma_collection_name(pid)
 
 
 # ── Gemini for subtopic extraction ────────────────────────────────────────────
@@ -73,7 +126,7 @@ def extract_text(pdf_path: str) -> dict:
     file_name = os.path.basename(pdf_path)
     title, author, num_pages = file_name, "Unknown", 0
 
-    # Try Unstructured first
+    # Try Unstructured first (optional upgrade)
     try:
         from unstructured.partition.pdf import partition_pdf
         elements  = partition_pdf(filename=pdf_path, strategy="fast")
@@ -128,27 +181,29 @@ def extract_subtopics(title: str, full_text: str) -> list[str]:
         f"No explanation, no markdown fences.\n"
         f"Title: {title}\nAbstract/intro: {snippet}"
     )
-    for attempt in range(2):
-        try:
-            r   = get_llm().invoke([HumanMessage(content=prompt)])
-            raw = r.content.strip().strip("```json").strip("```").strip()
-            parsed = json.loads(raw)
-            if isinstance(parsed, list):
-                return [str(x).lower().strip() for x in parsed]
-        except Exception as e:
-            if ("429" in str(e) or "RESOURCE_EXHAUSTED" in str(e)) and attempt == 0:
-                time.sleep(35)
-                continue
-            break
-    return ["uncategorized"]
+    try:
+        r   = get_llm().invoke([HumanMessage(content=prompt)])
+        raw = r.content.strip().strip("```json").strip("```").strip()
+        parsed = json.loads(raw)
+        if isinstance(parsed, list):
+            return [str(x).lower().strip() for x in parsed]
+    except Exception as e:
+        print(f"[Nexus] Subtopic extraction error: {e}")
+    return []
 
 
 # ── Ingestion pipeline ─────────────────────────────────────────────────────────
 def ingest_pdf(pdf_path: str, project_id: str, uploaded_by: str = "anonymous") -> dict:
-    col = get_collection(project_id)
+    idx = get_pinecone_index()
+    ns  = _namespace(project_id)
     dh  = file_hash(pdf_path)
 
-    if col.get(where={"doc_hash": dh})["ids"]:
+    # Check if already ingested (query by doc_hash metadata)
+    existing = idx.query(
+        vector=[0.0] * 384, top_k=1, namespace=ns,
+        filter={"doc_hash": {"$eq": dh}}, include_metadata=False
+    )
+    if existing["matches"]:
         return {"status": "skipped", "file_name": os.path.basename(pdf_path),
                 "chunks": 0, "doc_hash": dh}
 
@@ -157,25 +212,32 @@ def ingest_pdf(pdf_path: str, project_id: str, uploaded_by: str = "anonymous") -
         return {"status": "error", "reason": f"No extractable text (parser: {paper.get('parser','?')})",
                 "file_name": paper["file_name"], "chunks": 0, "doc_hash": ""}
 
-    subtopics  = extract_subtopics(paper["title"], paper["full_text"])
     chunks     = chunk_text(paper["full_text"])
     embeddings = embed_texts(chunks)
+    now        = datetime.now().isoformat()
 
-    ids   = [f"{dh}_chunk_{i}" for i in range(len(chunks))]
-    metas = [{
-        "doc_hash":    dh,
-        "file_name":   paper["file_name"],
-        "title":       paper["title"],
-        "author":      paper["author"],
-        "num_pages":   paper["num_pages"],
-        "chunk_index": i,
-        "uploaded_by": uploaded_by,
-        "uploaded_at": datetime.now().isoformat(),
-        "subtopics":   ", ".join(subtopics),
-        "parser":      paper.get("parser", "unknown"),
-    } for i in range(len(chunks))]
+    # Pinecone upsert in batches of 100
+    vectors = []
+    for i, (chunk, emb) in enumerate(zip(chunks, embeddings)):
+        vectors.append({
+            "id": f"{dh}_chunk_{i}",
+            "values": emb,
+            "metadata": {
+                "doc_hash":    dh,
+                "file_name":   paper["file_name"],
+                "title":       paper["title"],
+                "author":      paper["author"],
+                "num_pages":   paper["num_pages"],
+                "chunk_index": i,
+                "chunk_text":  chunk[:500],   # store first 500 chars for retrieval
+                "uploaded_by": uploaded_by,
+                "uploaded_at": now,
+            }
+        })
 
-    col.add(ids=ids, embeddings=embeddings, documents=chunks, metadatas=metas)
+    # Upsert in batches (Pinecone limit = 100 vectors per call)
+    for i in range(0, len(vectors), 100):
+        idx.upsert(vectors=vectors[i:i+100], namespace=ns)
 
     return {
         "status":    "success",
@@ -185,47 +247,65 @@ def ingest_pdf(pdf_path: str, project_id: str, uploaded_by: str = "anonymous") -
         "num_pages": paper["num_pages"],
         "chunks":    len(chunks),
         "doc_hash":  dh,
-        "subtopics": subtopics,
+        "subtopics": [],
         "full_text": paper["full_text"],
         "parser":    paper.get("parser"),
     }
 
 
-# ── Query ─────────────────────────────────────────────────────────────────────
+# ── Query ──────────────────────────────────────────────────────────────────────
 def query_papers(query: str, project_id: str, n_results: int = 5) -> list[dict]:
-    col   = get_collection(project_id)
-    total = col.count()
-    if total == 0:
+    idx = get_pinecone_index()
+    ns  = _namespace(project_id)
+
+    stats = idx.describe_index_stats()
+    ns_count = stats.get("namespaces", {}).get(ns, {}).get("vector_count", 0)
+    if ns_count == 0:
         return []
 
-    fetch_n = min(n_results * 2, total)
-    qe      = embed_texts([query])
-
-    res = col.query(
-        query_embeddings=qe,
-        n_results=fetch_n,
-        include=["documents", "metadatas", "distances"]
+    # Use retrieval_query task type — semantically different from retrieval_document
+    # This gives meaningfully better recall than using the same embedding for both
+    qe  = embed_query(query)
+    res = idx.query(
+        vector=qe,
+        top_k=n_results * 2,
+        namespace=ns,
+        include_metadata=True
     )
 
-    hits = [{
-        "chunk":     res["documents"][0][i],
-        "score":     round(1 - res["distances"][0][i], 3),
-        "file_name": res["metadatas"][0][i]["file_name"],
-        "title":     res["metadatas"][0][i]["title"],
-        "author":    res["metadatas"][0][i]["author"],
-        "chunk_idx": res["metadatas"][0][i]["chunk_index"],
-        "doc_hash":  res["metadatas"][0][i]["doc_hash"],
-    } for i in range(len(res["ids"][0]))]
-
-    return hits[:n_results]
+    hits = []
+    for match in res["matches"][:n_results]:
+        m = match["metadata"]
+        hits.append({
+            "chunk":     m.get("chunk_text", ""),
+            "score":     round(match["score"], 3),
+            "file_name": m["file_name"],
+            "title":     m["title"],
+            "author":    m["author"],
+            "chunk_idx": m["chunk_index"],
+            "doc_hash":  m["doc_hash"],
+        })
+    return hits
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 def list_ingested_papers(pid: str) -> list[dict]:
-    col  = get_collection(pid)
-    data = col.get(include=["metadatas"])
+    """List unique papers in a project namespace."""
+    idx = get_pinecone_index()
+    ns  = _namespace(pid)
+
+    stats = idx.describe_index_stats()
+    ns_count = stats.get("namespaces", {}).get(ns, {}).get("vector_count", 0)
+    if ns_count == 0:
+        return []
+
+    res = idx.query(
+        vector=[0.0] * EMBED_DIM, top_k=min(ns_count, 200),
+        namespace=ns, include_metadata=True
+    )
     seen = {}
-    for m in data["metadatas"]:
+    for match in res["matches"]:
+        m = match["metadata"]
         h = m["doc_hash"]
         if h not in seen:
             seen[h] = {
@@ -236,26 +316,40 @@ def list_ingested_papers(pid: str) -> list[dict]:
                 "uploaded_by": m["uploaded_by"],
                 "uploaded_at": m["uploaded_at"],
                 "doc_hash":    h,
-                "subtopics":   [t.strip() for t in m.get("subtopics","").split(",") if t.strip()],
-                "parser":      m.get("parser","unknown"),
+                "subtopics":   [],
+                "parser":      "pypdf",
             }
     return list(seen.values())
 
 def get_full_text(doc_hash: str, pid: str) -> str:
-    col = get_collection(pid)
-    r   = col.get(where={"doc_hash": doc_hash}, include=["documents","metadatas"])
-    if not r["ids"]:
+    """Reconstruct full text by fetching all chunks for a doc_hash."""
+    idx = get_pinecone_index()
+    ns  = _namespace(pid)
+
+    res = idx.query(
+        vector=[0.0] * EMBED_DIM, top_k=500, namespace=ns,
+        filter={"doc_hash": {"$eq": doc_hash}},
+        include_metadata=True
+    )
+    if not res["matches"]:
         return ""
-    paired = sorted(zip(r["metadatas"], r["documents"]), key=lambda x: x[0]["chunk_index"])
-    return "\n\n".join(d for _, d in paired)
+    chunks = sorted(res["matches"], key=lambda x: x["metadata"]["chunk_index"])
+    return "\n\n".join(c["metadata"].get("chunk_text", "") for c in chunks)
 
 def delete_paper(doc_hash: str, pid: str) -> int:
-    col = get_collection(pid)
-    ex  = col.get(where={"doc_hash": doc_hash})
-    if ex["ids"]:
-        col.delete(ids=ex["ids"])
-        return len(ex["ids"])
-    return 0
+    """Delete all vectors for a doc_hash from a project namespace."""
+    idx = get_pinecone_index()
+    ns  = _namespace(pid)
+
+    res = idx.query(
+        vector=[0.0] * EMBED_DIM, top_k=500, namespace=ns,
+        filter={"doc_hash": {"$eq": doc_hash}},
+        include_metadata=False
+    )
+    ids = [m["id"] for m in res["matches"]]
+    if ids:
+        idx.delete(ids=ids, namespace=ns)
+    return len(ids)
 
 def get_topic_coverage(pid: str) -> dict:
     cov = {}
