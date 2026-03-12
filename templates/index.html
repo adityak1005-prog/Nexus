@@ -113,7 +113,11 @@
   letter-spacing:.08em!important; line-height:1.9!important; word-spacing:.16em!important; }
 
 /* [RUBRIC B-E: Reduced motion] */
-@media(prefers-reduced-motion:reduce), .reduced-motion * {
+@media(prefers-reduced-motion:reduce) {
+  * { animation-duration:.01ms!important; transition-duration:.01ms!important; }
+}
+
+.reduced-motion * {
   animation-duration:.01ms!important; transition-duration:.01ms!important; }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
