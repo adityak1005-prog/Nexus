@@ -265,6 +265,7 @@ body::before { content:''; position:fixed; inset:0;
 <body>
 <div id="root"></div>
 
+{% raw %}
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
@@ -2734,5 +2735,6 @@ function App() {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(React.createElement(App));
 </script>
+{% endraw %}
 </body>
 </html>
