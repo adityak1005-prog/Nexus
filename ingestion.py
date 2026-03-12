@@ -23,15 +23,7 @@ from projects import get_chroma_collection_name
 load_dotenv()
 logging.getLogger("langsmith").setLevel(logging.WARNING)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 EMBED_MODEL    = "models/text-embedding-001"   # 768-dim, free via Gemini API 
-=======
-EMBED_MODEL    = "models/text-embedding-004"   # 768-dim, free via Gemini API
->>>>>>> 0fc9370750eacdfca255424a326e799ca2b72131
-=======
-EMBED_MODEL    = "models/text-embedding-004"   # 768-dim, free via Gemini API 
->>>>>>> 6f8f52bd072ad1dad19e535bf708f098650c29bc
 EMBED_DIM      = 768
 CHUNK_SIZE     = 900
 CHUNK_OVERLAP  = 150
