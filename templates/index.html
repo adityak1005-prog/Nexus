@@ -486,36 +486,37 @@ a { color: inherit; text-decoration: none; }
 
 /* Navigation */
 .nav-section {
-  padding: 14px 14px 4px;
-  font-size: 10px; font-weight: 600; color: var(--t2);
-  text-transform: uppercase; letter-spacing: .09em;
+  padding: 16px 14px 4px;
+  font-size: 9.5px; font-weight: 700; color: var(--t2);
+  text-transform: uppercase; letter-spacing: .11em;
   font-family: var(--mono);
   flex-shrink: 0;
 }
-.nav-items { padding: 0 6px; flex-shrink: 0; }
+.nav-items { padding: 0 8px; flex-shrink: 0; }
 /* [RUBRIC B-E: nav-item with accessible aria-current support] */
 .nav-item {
   display: flex; align-items: center; gap: 9px;
-  padding: 7px 10px; border-radius: var(--radius);
+  padding: 7px 10px; border-radius: 8px;
   cursor: pointer; font-size: 13px; font-weight: 500;
-  color: var(--t1); transition: all .15s; margin-bottom: 2px;
+  color: var(--t1); transition: all .14s; margin-bottom: 1px;
   border: 1px solid transparent;
   position: relative;
 }
-.nav-item:hover { background: var(--bg2); color: var(--t0); border-color: var(--border); }
+.nav-item:hover { background: var(--bg2); color: var(--t0); }
 .nav-item.active {
   background: var(--blue-bg2); color: var(--blue2);
   border-color: var(--glass-border);
+  font-weight: 600;
 }
 /* [RUBRIC 2A: Active nav indicator glow line] */
 .nav-item.active::before {
   content: '';
   position: absolute;
-  left: 0; top: 20%; bottom: 20%;
-  width: 2px;
+  left: 0; top: 25%; bottom: 25%;
+  width: 2.5px;
   background: var(--blue2);
   border-radius: 2px;
-  box-shadow: 0 0 6px var(--glow-blue);
+  box-shadow: 0 0 8px var(--glow-blue);
 }
 .nav-item .ico { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; opacity: .8; }
 .nav-item.active .ico { opacity: 1; }
@@ -527,7 +528,8 @@ a { color: inherit; text-decoration: none; }
 }
 .nav-item.active .nav-badge { background: var(--blue); color: #fff; }
 
-.sb-papers { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 6px 12px; }
+.sb-scroll-middle { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
+.sb-papers { overflow-y: visible; padding: 4px 6px 12px; }
 .sb-paper-item {
   padding: 8px 10px; border-radius: var(--radius);
   cursor: pointer; margin-bottom: 1px;
@@ -606,7 +608,6 @@ a { color: inherit; text-decoration: none; }
   display: flex; align-items: center; gap: 6px;
   font-size: 12px; font-weight: 500;
   color: var(--t1); cursor: pointer;
-  border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   transition: all .15s;
   white-space: nowrap;
@@ -1042,62 +1043,293 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ==========================================================================
-   [RUBRIC 2A: HOME / LANDING PAGE — Premium hero]
+   REDESIGNED HOME / LANDING PAGE — Linear × Stripe × Arc aesthetic
    ========================================================================== */
+
+/* ── Hero ── */
 .home-hero {
-  /* [RUBRIC 2A: Glassmorphism hero with radial glow] */
-  background: linear-gradient(160deg, rgba(37,99,235,.06) 0%, rgba(6,182,212,.03) 50%, transparent 100%);
+  background: transparent;
   border-bottom: 1px solid var(--border);
-  padding: 40px 44px 32px;
+  padding: 64px 56px 52px;
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
 }
-.home-hero::before {
-  content: '';
-  position: absolute;
-  right: -10%;
-  top: -30%;
-  width: 50%;
-  height: 200%;
-  background: radial-gradient(ellipse at center, rgba(37,99,235,.07) 0%, transparent 60%);
+.home-hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.35;
+  mask-image: radial-gradient(ellipse at 30% 50%, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at 30% 50%, black 20%, transparent 70%);
   pointer-events: none;
 }
-/* [RUBRIC 2A: Syne display font for hero headline] */
-.home-hero h1 {
-  font-family: var(--display);
-  font-size: clamp(18px, 3vw, 26px);
-  font-weight: 800;
-  letter-spacing: -0.6px; color: var(--t0); margin-bottom: 8px;
-  line-height: 1.2;
+.home-hero-orbs {
+  position: absolute; inset: 0; pointer-events: none;
+}
+.home-hero-orb1 {
+  position: absolute; top: -80px; right: -60px;
+  width: 380px; height: 380px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(37,99,235,.15) 0%, transparent 65%);
+  filter: blur(1px);
+}
+.home-hero-orb2 {
+  position: absolute; bottom: -40px; left: 10%;
+  width: 240px; height: 240px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(6,182,212,.08) 0%, transparent 65%);
+}
+.home-hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--blue-bg2);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 4px 14px 4px 8px;
+  margin-bottom: 22px;
   position: relative;
 }
-.home-hero p { font-size: 13px; color: var(--t1); max-width: 540px; line-height: 1.75; position: relative; }
-.home-body { flex: 1; min-height: 0; overflow-y: auto; padding: 28px 44px 60px; }
-/* [RUBRIC 2A: Responsive feature grid with clamp] */
-.feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-bottom: 28px; }
-.feature-card {
+.home-hero-eyebrow-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--blue2);
+  box-shadow: 0 0 6px var(--blue2);
+  animation: eyebrow-pulse 2s ease infinite;
+}
+@keyframes eyebrow-pulse {
+  0%,100% { opacity:1; } 50% { opacity:.4; }
+}
+.home-hero-eyebrow-text {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  color: var(--blue3); letter-spacing: .06em;
+}
+.home-hero h1 {
+  font-family: var(--display);
+  font-size: clamp(26px, 4.5vw, 44px);
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  color: var(--t0);
+  margin-bottom: 14px;
+  line-height: 1.1;
+  position: relative;
+  max-width: 700px;
+}
+.home-hero-grad {
+  background: linear-gradient(120deg, var(--t0) 0%, var(--blue3) 55%, var(--cyan) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+[data-theme="light"] .home-hero-grad {
+  background: linear-gradient(120deg, #0D1829 0%, #1746C8 55%, #0369A1 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.home-hero p {
+  font-size: 15px; color: var(--t1); max-width: 520px;
+  line-height: 1.75; position: relative; margin-bottom: 28px;
+}
+.home-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; position: relative; }
+.btn-landing-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 22px; border-radius: 8px;
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue2) 100%);
+  color: #fff; border: none; cursor: pointer;
+  box-shadow: 0 2px 20px var(--glow-blue), inset 0 1px 0 rgba(255,255,255,.15);
+  transition: all .2s;
+  letter-spacing: .01em;
+}
+.btn-landing-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 28px var(--glow-blue); }
+.btn-landing-secondary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 8px;
+  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  background: var(--glass-bg); backdrop-filter: var(--glass-blur);
+  color: var(--t1); border: 1px solid var(--border);
+  cursor: pointer; transition: all .18s;
+}
+.btn-landing-secondary:hover { border-color: var(--border2); color: var(--t0); background: var(--bg2); }
+
+/* ── User welcome card ── */
+.home-user-card {
+  display: flex; width: fit-content; align-items: center; gap: 12px;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 10px 16px; margin-bottom: 20px;
+  position: relative;
+}
+.home-user-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  flex-shrink: 0;
+}
+.home-user-name { font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--t0); }
+.home-user-sub { font-size: 11px; color: var(--t2); }
+
+/* ── Feature bento grid ── */
+.home-body { padding: 0 56px 80px; }
+.home-section-label {
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  color: var(--t2); text-transform: uppercase; letter-spacing: .1em;
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+.home-section-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto;
+  gap: 12px;
+  margin-bottom: 36px;
+}
+@media (max-width: 900px) { .bento-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .bento-grid { grid-template-columns: 1fr; } }
+.bento-card {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: 20px;
+  border-radius: 14px; padding: 20px 22px;
+  transition: all .2s;
+  position: relative; overflow: hidden;
+  cursor: default;
+}
+.bento-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at top left, var(--glow-blue2) 0%, transparent 65%);
+  opacity: 0; transition: opacity .22s; pointer-events: none;
+}
+.bento-card:hover { border-color: var(--glass-border); box-shadow: 0 8px 36px var(--glow-blue2); transform: translateY(-2px); }
+.bento-card:hover::after { opacity: 1; }
+.bento-card-wide { grid-column: span 2; }
+.bento-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; margin-bottom: 14px;
+  position: relative;
+}
+.bento-icon-blue { background: rgba(37,99,235,.15); border: 1px solid rgba(37,99,235,.25); }
+.bento-icon-green { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.25); }
+.bento-icon-purple { background: rgba(168,85,247,.12); border: 1px solid rgba(168,85,247,.25); }
+.bento-icon-orange { background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.25); }
+.bento-icon-cyan { background: rgba(6,182,212,.1); border: 1px solid rgba(6,182,212,.25); }
+.bento-title {
+  font-family: var(--display); font-size: 13px; font-weight: 700;
+  color: var(--t0); margin-bottom: 6px; position: relative;
+}
+.bento-desc {
+  font-size: 12px; color: var(--t1); line-height: 1.65; position: relative;
+}
+.bento-tag {
+  display: inline-block; margin-top: 10px;
+  font-family: var(--mono); font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  padding: 2px 8px; border-radius: 4px;
+}
+.bento-tag-new { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+.bento-tag-ai { background: rgba(37,99,235,.12); color: var(--blue3); border: 1px solid rgba(37,99,235,.3); }
+
+/* ── Projects grid ── */
+.home-landing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.project-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px;
   cursor: pointer; transition: all .2s;
   position: relative; overflow: hidden;
 }
-.feature-card::before {
+.project-card::before {
   content: '';
-  position: absolute;
-  top: 0; right: 0;
-  width: 60%; height: 60%;
-  background: radial-gradient(ellipse at top right, var(--glow-blue2) 0%, transparent 70%);
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--blue), var(--cyan));
   opacity: 0; transition: opacity .22s;
 }
-.feature-card:hover { border-color: var(--glass-border); box-shadow: 0 8px 32px var(--glow-blue2); transform: translateY(-2px); }
-.feature-card:hover::before { opacity: 1; }
-.feature-card-icon { font-size: 22px; margin-bottom: 12px; position: relative; }
-.feature-card-title { font-family: var(--display); font-size: 13px; font-weight: 700; color: var(--t0); margin-bottom: 6px; position: relative; }
-.feature-card-desc { font-size: 12px; color: var(--t1); line-height: 1.65; position: relative; }
-.quick-start { background: var(--glass-bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 22px; }
+.project-card:hover { border-color: var(--glass-border); box-shadow: 0 8px 36px var(--glow-blue2); transform: translateY(-2px); }
+.project-card:hover::before { opacity: 1; }
+.project-card-name {
+  font-family: var(--display); font-size: 14px; font-weight: 700;
+  color: var(--t0); margin-bottom: 6px; line-height: 1.3;
+}
+.project-card-stmt {
+  font-size: 12px; color: var(--t1); line-height: 1.6;
+  margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.project-card-stats {
+  display: flex; gap: 14px; margin-bottom: 14px;
+  font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--t0);
+}
+.project-card-collabs { display: flex; gap: -4px; }
+.project-card-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  font-size: 9px; font-weight: 700; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--bg1); margin-right: -4px;
+}
+.project-card-enter {
+  font-family: var(--mono); font-size: 11px; color: var(--blue2); font-weight: 600;
+  display: flex; align-items: center; gap: 4px; transition: gap .15s;
+}
+.project-card:hover .project-card-enter { gap: 8px; }
+
+/* ── How-it-works steps ── */
+.how-steps {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+  position: relative; margin-bottom: 36px;
+}
+@media (max-width: 900px) { .how-steps { grid-template-columns: 1fr; } }
+.how-steps::before {
+  content: '';
+  position: absolute; top: 18px; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), var(--blue), var(--border), transparent);
+  pointer-events: none;
+}
+@media (max-width: 900px) { .how-steps::before { display: none; } }
+.how-step { padding: 0 12px; text-align: center; position: relative; }
+.how-step-num {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg2); border: 1px solid var(--border);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--blue2);
+  margin: 0 auto 10px; position: relative;
+  transition: all .2s;
+}
+.how-step:hover .how-step-num { background: var(--blue); color: #fff; border-color: var(--blue); box-shadow: 0 0 16px var(--glow-blue); }
+.how-step-title { font-family: var(--display); font-size: 12px; font-weight: 700; color: var(--t0); margin-bottom: 4px; }
+.how-step-desc { font-size: 11px; color: var(--t2); line-height: 1.6; }
+
+/* ── Stats strip ── */
+.home-stats-strip {
+  display: flex; gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden;
+  margin-bottom: 36px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+}
+.home-stat-item {
+  flex: 1; padding: 20px 24px;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.home-stat-item:last-child { border-right: none; }
+.home-stat-num {
+  font-family: var(--display); font-size: 28px; font-weight: 800;
+  letter-spacing: -1px; color: var(--t0); line-height: 1;
+  margin-bottom: 4px;
+}
+.home-stat-label { font-family: var(--mono); font-size: 10px; color: var(--t2); text-transform: uppercase; letter-spacing: .07em; }
+.home-stat-accent { display: block; font-size: 10px; color: var(--green); font-family: var(--mono); margin-top: 2px; }
+
+/* ── Quick start ── */
+.quick-start { background: var(--glass-bg); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; }
 .qs-step { display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border); }
 .qs-step:last-child { border-bottom: none; }
 .qs-num {
@@ -1266,7 +1498,7 @@ a { color: inherit; text-decoration: none; }
 /* Floating access button */
 .a11y-fab {
   position: fixed;
-  bottom: 24px; left: 24px;
+  bottom: 24px; right: 24px;
   width: 44px; height: 44px;
   border-radius: 50%;
   background: var(--glass-bg);
@@ -1289,7 +1521,7 @@ a { color: inherit; text-decoration: none; }
 /* Accessibility panel */
 .a11y-panel {
   position: fixed;
-  bottom: 80px; left: 24px;
+  bottom: 80px; right: 24px;
   width: 310px;
   background: var(--bg1);
   border: 1px solid var(--border2);
@@ -1656,8 +1888,6 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
   color: var(--t1);
   line-height: 1.6;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   position: relative;
@@ -2020,6 +2250,9 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
     </button>
   </div>
 
+  <!-- Scrollable middle section: nav + papers list -->
+  <div class="sb-scroll-middle">
+
   <div class="nav-section" aria-hidden="true">Views</div>
 
   <!-- [RUBRIC B-E: nav items with aria-current for screen readers] -->
@@ -2083,6 +2316,8 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
     </template>
   </div>
 
+  </div><!-- /sb-scroll-middle -->
+
   <div class="sb-footer">
     <div class="proj-label sb-footer-label">Team</div>
     <div class="avatar-stack" role="list" aria-label="Team members" x-show="!sidebarCollapsed">
@@ -2137,7 +2372,7 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
       </template>
 
       <div style="display:flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--border)">
-        <div class="avatar" style="background:var(--blue);width:28px;height:28px;font-size:10px" x-text="initials(username)" :aria-label="'Logged in as ' + username" @click="showUserModal=true" title="Switch user" style="cursor:pointer"></div>
+        <div class="avatar" style="background:var(--blue);width:28px;height:28px;font-size:10px;cursor:pointer" x-text="initials(username)" :aria-label="'Logged in as ' + username" @click="showUserModal=true" title="Switch user"></div>
         <span style="font-size:12px;color:var(--t1);cursor:pointer" x-text="username" @click="showUserModal=true"></span>
       </div>
     </div>
@@ -2174,251 +2409,225 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
   <!-- ================== PANELS ================== -->
   <div class="panels" role="main">
 
-    <!-- ─── HOME LANDING PAGE ─── -->
+    <!-- ─── HOME LANDING PAGE (redesigned — Linear × Stripe × Arc) ─── -->
     <article class="panel-col" x-show="tab==='home'" aria-label="Home panel" style="overflow-y:auto">
-      <!-- HERO -->
-      <div class="home-hero" style="position:relative;overflow:hidden">
-        <!-- Animated glow orb -->
-        <div style="position:absolute;top:-60px;right:-60px;width:280px;height:280px;
-          border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.18) 0%,transparent 70%);
-          pointer-events:none"></div>
 
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;position:relative">
-          <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--blue2);
-            background:var(--blue-bg2);border:1px solid var(--glass-border);
-            padding:3px 10px;border-radius:4px;letter-spacing:.06em">IIT Delhi × ICL AI Hackathon</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--t2)">Grand Challenge 1 · Knowledge Curation</div>
+      <!-- ══ HERO ══ -->
+      <div class="home-hero">
+        <div class="home-hero-grid"></div>
+        <div class="home-hero-orbs">
+          <div class="home-hero-orb1"></div>
+          <div class="home-hero-orb2"></div>
         </div>
 
-        <!-- Welcome message -->
+        <!-- User welcome pill (shown when signed in) -->
         <template x-if="username">
-          <div style="margin-bottom:8px;position:relative">
-            <div style="font-family:var(--mono);font-size:11px;color:var(--blue2);font-weight:600;
-              letter-spacing:.06em;margin-bottom:6px">WELCOME BACK, COLLABORATOR</div>
-            <div style="display:inline-flex;align-items:center;gap:10px;
-              background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);
-              padding:8px 14px">
-              <div :style="'width:32px;height:32px;border-radius:50%;display:flex;align-items:center;'+
-                'justify-content:center;font-size:13px;font-weight:700;color:#fff;'+
-                'background:linear-gradient(135deg,var(--blue),var(--cyan))'"
-                x-text="(username||'?')[0].toUpperCase()"></div>
-              <div>
-                <div style="font-family:var(--display);font-size:15px;font-weight:700;color:var(--t0)"
-                  x-text="username"></div>
-                <div style="font-size:11px;color:var(--t2)">Active researcher</div>
-              </div>
-              <button class="btn btn-ghost btn-sm" style="margin-left:8px"
-                @click="showUserModal=true;userModalEditMode=false">Switch ↓</button>
+          <div class="home-user-card" style="margin-bottom:20px">
+            <div class="home-user-avatar" x-text="(username||'?')[0].toUpperCase()"></div>
+            <div>
+              <div class="home-user-name" x-text="username"></div>
+              <div class="home-user-sub">Active researcher · <span x-text="projects.length + ' project' + (projects.length!==1?'s':'')"></span></div>
             </div>
+            <button class="btn btn-ghost btn-xs" style="margin-left:6px" @click="showUserModal=true;userModalEditMode=false">Switch</button>
           </div>
         </template>
 
-        <h1 style="margin-bottom:8px;position:relative">
-          <span :style="darkMode
-            ? 'background:linear-gradient(135deg,#f0f6fc 0%,#93c5fd 60%,#06b6d4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;'
-            : 'background:linear-gradient(135deg,#0D1829 0%,#1746C8 55%,#0369A1 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;'">
-            Research Intelligence Platform
-          </span>
+        <!-- Eyebrow -->
+        <div class="home-hero-eyebrow" style="margin-bottom:20px">
+          <div class="home-hero-eyebrow-dot"></div>
+          <span class="home-hero-eyebrow-text">IIT Delhi × ICL AI Hackathon · Knowledge Curation</span>
+        </div>
+
+        <h1>
+          Turn research chaos into<br>
+          <span class="home-hero-grad">structured intelligence.</span>
         </h1>
-        <p style="position:relative">Upload, analyse, and connect academic papers with AI. Surface insights, identify research gaps, detect contradictions, and collaborate with your team — all in one unified workspace.</p>
+        <p>Upload PDFs, surface insights, detect contradictions, and collaborate — all in one AI-native workspace built for modern research teams.</p>
+
+        <div class="home-hero-actions">
+          <button class="btn-landing-primary" @click="showCreateProject=true">
+            <span>Start a project</span>
+            <span style="font-size:14px">→</span>
+          </button>
+          <button class="btn-landing-secondary" @click="tab='library'" x-show="project">
+            Open library
+          </button>
+        </div>
       </div>
 
-      <!-- BODY -->
-      <div class="home-body">
+      <!-- ══ BODY ══ -->
+      <div class="home-body" style="padding-top:44px">
 
-        <!-- ── Your Projects ── -->
-        <div style="margin-bottom:32px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--t2);
-                        text-transform:uppercase;letter-spacing:.08em">
-              Your Projects
+        <!-- ── Active project quick-jump ── -->
+        <div x-show="project" style="margin-bottom:40px">
+          <div class="home-stats-strip">
+            <div class="home-stat-item">
+              <div class="home-stat-num" x-text="stats.total_papers||0"></div>
+              <div class="home-stat-label">Papers</div>
+              <span class="home-stat-accent" x-text="(stats.summarized||0)+' analysed'"></span>
             </div>
+            <div class="home-stat-item">
+              <div class="home-stat-num" x-text="stats.topics||0"></div>
+              <div class="home-stat-label">Topics</div>
+            </div>
+            <div class="home-stat-item">
+              <div class="home-stat-num" x-text="stats.chat_messages||0"></div>
+              <div class="home-stat-label">Messages</div>
+            </div>
+            <div class="home-stat-item" style="display:flex;flex-direction:column;justify-content:center;padding:16px 24px">
+              <div style="font-family:var(--display);font-size:13px;font-weight:700;color:var(--t0);margin-bottom:2px" x-text="project?.name"></div>
+              <div style="font-size:11px;color:var(--t2);margin-bottom:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px" x-text="project?.problem_statement"></div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-primary btn-sm" @click="tab='dashboard'">Dashboard →</button>
+                <button class="btn btn-ghost btn-sm" @click="tab='chat'">Chat</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Projects ── -->
+        <div style="margin-bottom:40px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div class="home-section-label" style="flex:1;margin-bottom:0;margin-right:16px">Your Projects</div>
             <button class="btn btn-primary btn-sm" @click="showCreateProject=true">+ New Project</button>
           </div>
 
-          <!-- Projects grid -->
           <template x-if="projects.length > 0">
             <div class="home-landing-grid">
               <template x-for="p in projects" :key="p.id">
-                <div class="project-card" @click="enterProject(p.id)" tabindex="0" role="button"
+                <div class="project-card"
+                     @click="enterProject(p.id)"
+                     tabindex="0" role="button"
                      :aria-label="'Enter project: ' + p.name"
                      @keyup.enter="enterProject(p.id)"
-                     :style="activePid===p.id ? 'border-color:var(--blue2);box-shadow:0 4px 24px var(--glow-blue2)' : ''">
+                     :style="activePid===p.id ? 'border-color:var(--blue2);box-shadow:0 4px 28px var(--glow-blue2)' : ''">
 
-                  <!-- Active badge -->
                   <template x-if="activePid===p.id">
-                    <div style="position:absolute;top:12px;right:12px;
-                      background:var(--blue);color:#fff;font-family:var(--mono);
-                      font-size:9px;font-weight:600;padding:2px 7px;border-radius:3px;letter-spacing:.05em">
-                      ACTIVE
-                    </div>
+                    <div style="position:absolute;top:14px;right:14px;background:var(--blue);color:#fff;
+                      font-family:var(--mono);font-size:9px;font-weight:700;
+                      padding:2px 8px;border-radius:20px;letter-spacing:.05em">ACTIVE</div>
                   </template>
 
                   <div class="project-card-name" x-text="p.name"></div>
                   <div class="project-card-stmt" x-text="p.problem_statement"></div>
 
-                  <!-- Stats -->
                   <div class="project-card-stats">
-                    <div style="display:flex;align-items:baseline;gap:4px">
+                    <div>
                       <span x-text="Object.keys(p.papers||{}).length"></span>
-                      <span style="color:var(--t2);font-size:10px">papers</span>
+                      <span style="color:var(--t2)"> papers</span>
                     </div>
-                    <div style="display:flex;align-items:baseline;gap:4px">
+                    <div>
                       <span x-text="Object.keys(p.collaborators||{}).length"></span>
-                      <span style="color:var(--t2);font-size:10px">collaborators</span>
-                    </div>
-                    <div style="display:flex;align-items:baseline;gap:4px">
-                      <span x-text="(p.chat||[]).length"></span>
-                      <span style="color:var(--t2);font-size:10px">messages</span>
+                      <span style="color:var(--t2)"> collabs</span>
                     </div>
                   </div>
 
-                  <!-- Collaborator avatars -->
                   <div style="display:flex;align-items:center;justify-content:space-between">
                     <div class="project-card-collabs">
                       <template x-for="(c, name) in (p.collaborators||{})" :key="name">
-                        <div class="project-card-avatar"
-                          :style="'background:'+(c.color||'var(--blue)')"
-                          :title="name"
-                          x-text="(name||'?')[0].toUpperCase()"></div>
-                      </template>
-                      <template x-if="Object.keys(p.collaborators||{}).length === 0">
-                        <div style="font-size:10px;color:var(--t2)">No collaborators yet</div>
+                        <div class="project-card-avatar" :style="'background:'+(c.color||'var(--blue)')" :title="name" x-text="(name||'?')[0].toUpperCase()"></div>
                       </template>
                     </div>
-                    <div class="project-card-enter">
-                      Enter <span>→</span>
-                    </div>
+                    <div class="project-card-enter">Open →</div>
                   </div>
-
-                  <!-- My contribution badge -->
-                  <template x-if="username && (p.collaborators||{})[username]">
-                    <div style="
-                      background:var(--blue-bg);border:1px solid var(--glass-border);
-                      border-radius:4px;padding:4px 8px;font-size:10px;
-                      font-family:var(--mono);color:var(--blue2);display:inline-flex;align-items:center;gap:5px">
-                      ✓ You're a contributor ·
-                      <span x-text="((p.collaborators||{})[username]?.papers||[]).length + ' paper(s)'"></span>
-                    </div>
-                  </template>
                 </div>
               </template>
 
-              <!-- Create new project card -->
               <div class="project-card" @click="showCreateProject=true" tabindex="0" role="button"
-                   style="border-style:dashed;align-items:center;justify-content:center;
-                          min-height:140px;gap:8px;text-align:center"
+                   style="border-style:dashed;display:flex;flex-direction:column;align-items:center;
+                          justify-content:center;min-height:160px;gap:8px;text-align:center"
                    aria-label="Create new project">
-                <div style="font-size:28px;opacity:.3">+</div>
-                <div style="font-size:13px;color:var(--t2)">Create new project</div>
+                <div style="width:40px;height:40px;border-radius:50%;border:1.5px dashed var(--border2);
+                  display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--t2);
+                  transition:all .2s" class="new-proj-plus">+</div>
+                <div style="font-size:12px;color:var(--t2)">New project</div>
               </div>
             </div>
           </template>
 
-          <!-- Empty state -->
           <template x-if="projects.length === 0">
-            <div style="text-align:center;padding:60px 20px;border:1px dashed var(--border2);
-                        border-radius:var(--radius-lg)">
-              <div style="font-size:48px;margin-bottom:16px;opacity:.3">▦</div>
-              <div style="font-family:var(--display);font-size:16px;font-weight:600;color:var(--t1);margin-bottom:6px">
-                No projects yet
-              </div>
-              <div style="font-size:12px;color:var(--t2);margin-bottom:20px">
-                Create your first project to start organising research
-              </div>
-              <button class="btn btn-primary" @click="showCreateProject=true">Create First Project →</button>
+            <div style="text-align:center;padding:72px 20px;border:1px dashed var(--border2);border-radius:16px">
+              <div style="font-size:40px;margin-bottom:16px;opacity:.25">◈</div>
+              <div style="font-family:var(--display);font-size:17px;font-weight:700;color:var(--t0);margin-bottom:8px">No projects yet</div>
+              <div style="font-size:13px;color:var(--t2);margin-bottom:24px;max-width:300px;margin-inline:auto">Create your first project to start organising your research papers.</div>
+              <button class="btn-landing-primary" @click="showCreateProject=true">Create first project →</button>
             </div>
           </template>
         </div>
 
-        <!-- ── Platform Features ── -->
-        <div style="margin-bottom:32px">
-          <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--t2);
-                      text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">What Nexus Can Do</div>
-          <div class="feature-grid">
-            <div class="feature-card" tabindex="0" role="presentation">
-              <div class="feature-card-icon">⊞</div>
-              <div class="feature-card-title">Paper Library</div>
-              <div class="feature-card-desc">Upload PDFs — AI extracts summaries, reliability assessments, and research topics automatically.</div>
+        <!-- ── Features bento ── -->
+        <div style="margin-bottom:40px">
+          <div class="home-section-label" style="margin-bottom:16px">What Nexus can do</div>
+          <div class="bento-grid">
+            <div class="bento-card">
+              <div class="bento-icon bento-icon-blue">📄</div>
+              <div class="bento-title">Paper Library</div>
+              <div class="bento-desc">Upload PDFs — AI extracts summaries, reliability scores, and research topics automatically on every upload.</div>
+              <span class="bento-tag bento-tag-ai">AI-powered</span>
             </div>
-            <div class="feature-card" tabindex="0" role="presentation">
-              <div class="feature-card-icon">◻</div>
-              <div class="feature-card-title">Research Chat</div>
-              <div class="feature-card-desc">Ask questions across your entire library. The AI cites exact passages from your uploaded papers.</div>
+            <div class="bento-card">
+              <div class="bento-icon bento-icon-cyan">💬</div>
+              <div class="bento-title">Research Chat</div>
+              <div class="bento-desc">Ask questions across your entire library. The AI cites exact passages and page numbers from your papers.</div>
+              <span class="bento-tag bento-tag-ai">RAG-based</span>
             </div>
-            <div class="feature-card" tabindex="0" role="presentation">
-              <div class="feature-card-icon">⚡</div>
-              <div class="feature-card-title">Collision Engine</div>
-              <div class="feature-card-desc">Automatically detects contradictory claims between papers — surfaces conflicts instantly.</div>
+            <div class="bento-card">
+              <div class="bento-icon bento-icon-orange" style="font-size:15px">⚡</div>
+              <div class="bento-title">Collision Engine</div>
+              <div class="bento-desc">Detects contradictory claims across papers — surfaces semantic conflicts your team needs to resolve.</div>
+              <span class="bento-tag bento-tag-new">Smart</span>
             </div>
-            <div class="feature-card" tabindex="0" role="presentation">
-              <div class="feature-card-icon">📊</div>
-              <div class="feature-card-title">Contribution Heatmap</div>
-              <div class="feature-card-desc">GitHub-style activity grid showing each collaborator's uploads, analyses, and annotations.</div>
+            <div class="bento-card bento-card-wide">
+              <div style="display:flex;gap:20px;align-items:flex-start">
+                <div style="flex:1">
+                  <div class="bento-icon bento-icon-purple">👥</div>
+                  <div class="bento-title">Collaboration Hub</div>
+                  <div class="bento-desc">GitHub-style contribution heatmap, per-member activity tracking, and real-time contradiction alerts.</div>
+                </div>
+                <div style="flex:1">
+                  <div class="bento-icon bento-icon-green">🧩</div>
+                  <div class="bento-title">Concept Deconstructor</div>
+                  <div class="bento-desc">Break dense equations into scaffolded explanations tuned to Beginner, Intermediate, or Advanced depth.</div>
+                  <span class="bento-tag bento-tag-new">New</span>
+                </div>
+              </div>
             </div>
-            <div class="feature-card" tabindex="0" role="presentation">
-              <div class="feature-card-icon">🧩</div>
-              <div class="feature-card-title">Concept Deconstructor</div>
-              <div class="feature-card-desc">Break dense equations and complex ideas into scaffolded learning modules for different expertise levels.</div>
-            </div>
-            <div class="feature-card" tabindex="0" role="presentation">
-              <div class="feature-card-icon">◇</div>
-              <div class="feature-card-title">Diagram Generator</div>
-              <div class="feature-card-desc">Generate Mermaid flowcharts, mind maps, timelines, and concept maps directly from your papers.</div>
+            <div class="bento-card">
+              <div class="bento-icon bento-icon-cyan">📊</div>
+              <div class="bento-title">Diagram Generator</div>
+              <div class="bento-desc">Auto-generate Mermaid flowcharts, mind maps, and timelines from your paper content.</div>
             </div>
           </div>
         </div>
 
-        <!-- ── Quick start guide ── -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-          <div>
-            <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--t2);
-                        text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Quick Start</div>
-            <div class="quick-start">
-              <div class="qs-step"><div class="qs-num">1</div>
-                <div class="qs-text"><strong>Select or create a project</strong><span>Pick from the grid above, or create a new one with a research problem statement.</span></div>
-              </div>
-              <div class="qs-step"><div class="qs-num">2</div>
-                <div class="qs-text"><strong>Upload PDF papers</strong><span>Drag &amp; drop or browse. Files are chunked and embedded automatically.</span></div>
-              </div>
-              <div class="qs-step"><div class="qs-num">3</div>
-                <div class="qs-text"><strong>Analyse each paper</strong><span>Click Analyse — AI generates summary, reliability, and topics.</span></div>
-              </div>
-              <div class="qs-step"><div class="qs-num">4</div>
-                <div class="qs-text"><strong>Chat &amp; detect contradictions</strong><span>Ask questions across your library and run the Collision Engine.</span></div>
-              </div>
-              <div class="qs-step"><div class="qs-num">5</div>
-                <div class="qs-text"><strong>Use the Deconstructor</strong><span>Paste any dense equation for scaffolded multi-level explanations.</span></div>
-              </div>
+        <!-- ── How it works ── -->
+        <div style="margin-bottom:40px">
+          <div class="home-section-label" style="margin-bottom:24px">How it works</div>
+          <div class="how-steps">
+            <div class="how-step">
+              <div class="how-step-num">1</div>
+              <div class="how-step-title">Create project</div>
+              <div class="how-step-desc">Name it and describe your research question</div>
             </div>
-          </div>
-
-          <!-- Active project quick-access -->
-          <div x-show="project">
-            <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--t2);
-                        text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Current Project</div>
-            <div class="card-glow">
-              <div style="font-family:var(--display);font-size:15px;font-weight:700;margin-bottom:4px" x-text="project?.name"></div>
-              <div style="font-size:12px;color:var(--t1);margin-bottom:14px" x-text="project?.problem_statement"></div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-                <div style="text-align:center;padding:12px;background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border)">
-                  <div style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--t0)" x-text="stats.total_papers||0"></div>
-                  <div style="font-size:10px;color:var(--t2);font-family:var(--mono)">Papers</div>
-                </div>
-                <div style="text-align:center;padding:12px;background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border)">
-                  <div style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--t0)" x-text="stats.topics||0"></div>
-                  <div style="font-size:10px;color:var(--t2);font-family:var(--mono)">Topics</div>
-                </div>
-                <div style="text-align:center;padding:12px;background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border)">
-                  <div style="font-family:var(--display);font-size:22px;font-weight:700;color:var(--t0)" x-text="stats.chat_messages||0"></div>
-                  <div style="font-size:10px;color:var(--t2);font-family:var(--mono)">Messages</div>
-                </div>
-              </div>
-              <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-primary btn-sm" @click="tab='dashboard'">Go to Dashboard →</button>
-                <button class="btn btn-ghost btn-sm" @click="tab='library'">Open Library</button>
-                <button class="btn btn-ghost btn-sm" @click="showUpload=true">↑ Upload</button>
-              </div>
+            <div class="how-step">
+              <div class="how-step-num">2</div>
+              <div class="how-step-title">Upload PDFs</div>
+              <div class="how-step-desc">Drag and drop — AI processes everything automatically</div>
+            </div>
+            <div class="how-step">
+              <div class="how-step-num">3</div>
+              <div class="how-step-title">Analyse papers</div>
+              <div class="how-step-desc">AI generates summaries, topics, reliability signals</div>
+            </div>
+            <div class="how-step">
+              <div class="how-step-num">4</div>
+              <div class="how-step-title">Chat &amp; explore</div>
+              <div class="how-step-desc">Ask questions, run gap analysis, detect contradictions</div>
+            </div>
+            <div class="how-step">
+              <div class="how-step-num">5</div>
+              <div class="how-step-title">Collaborate</div>
+              <div class="how-step-desc">Invite your team — track contributions and review together</div>
             </div>
           </div>
         </div>
@@ -2872,7 +3081,7 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
           </div>
         </template>
         <template x-for="(msg,i) in (project?.chat||[])" :key="i">
-          <div class="chat-message" :class="msg.type==='ai'?'msg-ai'':''">
+          <div class="chat-message" :class="msg.type==='ai'?'msg-ai':''">
             <div class="chat-avatar"
                  :style="msg.type==='ai'?'background:linear-gradient(135deg,var(--blue),var(--blue2))':'background:'+avatarColor(msg.user)"
                  :aria-label="msg.type==='ai' ? 'AI assistant' : msg.user">
@@ -3687,7 +3896,7 @@ function app() {
 
     /* ── [RUBRIC 2A] Theme ───────────────────────────────────────── */
     // Persist dark mode preference in localStorage
-    darkMode: localStorage.getItem('nexus-dark') === 'true',
+    darkMode: localStorage.getItem('nexus-dark') !== 'false',
 
     /* ── [RUBRIC B-E] Accessibility state ────────────────────────── */
     showA11yPanel: false,
