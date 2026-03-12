@@ -128,7 +128,7 @@ def extract_text(pdf_path: str) -> dict:
 
     # Try Unstructured first (optional upgrade)
     try:
-        from unstructured.partition.pdf import partition_pdf
+        from unstructured.partition.pdf import partition_pdf  # type: ignore
         elements  = partition_pdf(filename=pdf_path, strategy="fast")
         full_text = "\n\n".join(str(e) for e in elements if str(e).strip())
         try:
