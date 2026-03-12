@@ -586,41 +586,6 @@ def deconstruct_api(pid: str, data: DeconstructRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── Knowledge Graph ────────────────────────────────────────────────────────────
-
-@app.get("/api/projects/{pid}/knowledge-graph")
-async def knowledge_graph(pid: str):
-    from projects import load_project
-
-    proj = load_project(pid)
-    if not proj:
-        raise HTTPException(404)
-
-    nodes, edges, seen_topics = [], [], {}
-    papers_db = proj.get("papers", {})
-
-    for paper in papers_db.values():
-        pid_node = f"paper_{paper['doc_hash']}"
-        label    = (paper.get("title") or paper.get("file_name", ""))[:35]
-        nodes.append({
-            "id":     pid_node,
-            "label":  label,
-            "group":  "paper",
-            "title":  paper.get("title") or paper.get("file_name", ""),
-            "status": paper.get("status", "pending"),
-        })
-        for topic in paper.get("subtopics", []):
-            t   = topic.strip().lower()
-            if not t:
-                continue
-            tid = f"topic_{t.replace(' ', '_').replace('/', '_')}"
-            if tid not in seen_topics:
-                seen_topics[tid] = True
-                nodes.append({"id": tid, "label": t, "group": "topic"})
-            edges.append({"from": pid_node, "to": tid})
-
-    return {"nodes": nodes, "edges": edges}
-
 
 # ── Stats ──────────────────────────────────────────────────────────────────────
 
