@@ -270,6 +270,7 @@ body::before { content:''; position:fixed; inset:0;
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 // ─── Lucide Icons ────────────────────────────────────────────────────────────
+// Sparkles → AI Summary header  |  ShieldCheck → Reliability header  |  FileText → File Info header
 const LR = window.LucideReact || {};
 const Icon = ({ name, size=16, ...props }) => {
   const C = LR[name];
@@ -1119,103 +1120,223 @@ function Library({ project, selectedHash, setSelectedHash, setSelectedPaper, sel
         )}
       </div>
 
-      {/* Paper detail pane */}
+      {/* ── Paper detail pane — 3-column layout ──────────────────────────────── */}
       {selectedPaper && (
-        <div style={{width:340,flexShrink:0,overflowY:'auto',borderLeft:'1px solid var(--border)',
-          padding:20,background:'var(--bg1)'}}>
-          <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:16}}>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontFamily:'var(--font-display)',fontSize:14,fontWeight:700,
-                color:'var(--t0)',lineHeight:1.4,marginBottom:4}}>{selectedPaper.title||selectedPaper.file_name}</div>
-              <div style={{fontSize:11,color:'var(--t1)'}}>{selectedPaper.author}</div>
+        <div style={{
+          width: 780, flexShrink: 0, overflow: 'hidden',
+          borderLeft: '1px solid var(--border)',
+          display: 'flex', flexDirection: 'column',
+          background: 'var(--bg1)',
+        }}>
+          {/* ── Header row: title · status badge · action buttons ── */}
+          <div style={{
+            padding: '14px 18px', borderBottom: '1px solid var(--border)',
+            flexShrink: 0, display: 'flex', alignItems: 'flex-start', gap: 12,
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700,
+                color: 'var(--t0)', lineHeight: 1.4, marginBottom: 3,
+              }}>{selectedPaper.title || selectedPaper.file_name}</div>
+              <div style={{ fontSize: 11, color: 'var(--t1)', marginBottom: 8 }}>{selectedPaper.author}</div>
+              {selectedPaper.status !== 'summarized' ? (
+                <Btn primary onClick={onAnalyse} disabled={analysing} style={{ justifyContent: 'center' }}>
+                  {analysing
+                    ? <><span className="spinner" /> Analysing…</>
+                    : <><Icon name="Zap" size={14} /> Analyse with AI</>}
+                </Btn>
+              ) : (
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '4px 10px', borderRadius: 'var(--radius)',
+                  background: 'rgba(34,197,94,.1)', border: '1px solid rgba(34,197,94,.3)',
+                  fontSize: 10, fontWeight: 700, color: 'var(--green)',
+                  fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '.05em',
+                }}>
+                  <Icon name="CheckCircle" size={12} /> Analysed
+                </div>
+              )}
             </div>
-            <div style={{display:'flex',gap:4,marginLeft:8,flexShrink:0}}>
+            {/* Action buttons */}
+            <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
               {a11y.tts && selectedPaper.summary && (
                 <button onClick={speakSummary} title="Read summary aloud"
                   /* [RUBRIC B-E: TTS Volume2 button per spec] */
-                  style={{width:30,height:30,borderRadius:'var(--radius)',border:'1px solid var(--border)',
-                    background:'var(--bg2)',color:'var(--t1)',cursor:'pointer',display:'flex',
-                    alignItems:'center',justifyContent:'center'}}>
-                  <Icon name="Volume2" size={14}/>
+                  style={{
+                    width: 30, height: 30, borderRadius: 'var(--radius)',
+                    border: '1px solid var(--border)', background: 'var(--bg2)',
+                    color: 'var(--t1)', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                  <Icon name="Volume2" size={14} />
                 </button>
               )}
-              <button onClick={()=>setCompareMode(!compareMode)} title="Compare mode"
-                style={{width:30,height:30,borderRadius:'var(--radius)',border:'1px solid var(--border)',
-                  background:compareMode?'var(--blue-bg)':'var(--bg2)',color:compareMode?'var(--blue2)':'var(--t1)',
-                  cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <Icon name="GitMerge" size={14}/>
+              <button onClick={() => setCompareMode(!compareMode)} title="Compare mode"
+                style={{
+                  width: 30, height: 30, borderRadius: 'var(--radius)',
+                  border: '1px solid var(--border)',
+                  background: compareMode ? 'var(--blue-bg)' : 'var(--bg2)',
+                  color: compareMode ? 'var(--blue2)' : 'var(--t1)',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                <Icon name="GitMerge" size={14} />
               </button>
               <button onClick={onDelete} title="Delete paper"
-                style={{width:30,height:30,borderRadius:'var(--radius)',border:'1px solid rgba(239,68,68,.2)',
-                  background:'rgba(239,68,68,.08)',color:'var(--red)',cursor:'pointer',display:'flex',
-                  alignItems:'center',justifyContent:'center'}}>
-                <Icon name="Trash2" size={14}/>
+                style={{
+                  width: 30, height: 30, borderRadius: 'var(--radius)',
+                  border: '1px solid rgba(239,68,68,.2)',
+                  background: 'rgba(239,68,68,.08)', color: 'var(--red)',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                <Icon name="Trash2" size={14} />
               </button>
             </div>
           </div>
 
-          {selectedPaper.status !== 'summarized' ? (
-            <Btn primary onClick={onAnalyse} disabled={analysing} style={{width:'100%',justifyContent:'center',marginBottom:16}}>
-              {analysing?<><span className="spinner"/>' Analysing…'</>:<><Icon name="Zap" size={14}/> Analyse with AI</>}
-            </Btn>
-          ) : (
-            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12,padding:'5px 10px',
-              borderRadius:'var(--radius)',background:'rgba(34,197,94,.1)',border:'1px solid rgba(34,197,94,.3)',
-              fontSize:10,fontWeight:700,color:'var(--green)',fontFamily:'monospace',textTransform:'uppercase',letterSpacing:'.05em',width:'fit-content'}}>
-              <Icon name="CheckCircle" size={12}/> Analysed
-            </div>
-          )}
+          {/* ── 3-column body ── */}
+          <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
 
-          {selectedPaper.summary && (
-            <div style={{marginBottom:16}}>
-              <div style={{fontFamily:'monospace',fontSize:10,fontWeight:600,color:'var(--t2)',
-                textTransform:'uppercase',letterSpacing:'.08em',marginBottom:10}}>Summary</div>
-              <MarkdownContent text={selectedPaper.summary}/>
-            </div>
-          )}
-
-          {selectedPaper.reliability && (
-            <div style={{marginBottom:16,padding:'10px 14px',background:'var(--bg2)',
-              border:'1px solid var(--border)',borderRadius:'var(--radius)'}}>
-              <div style={{fontFamily:'monospace',fontSize:10,fontWeight:600,color:'var(--t2)',
-                textTransform:'uppercase',letterSpacing:'.08em',marginBottom:6}}>Reliability Assessment</div>
-              <div style={{fontSize:12,color:'var(--t1)',lineHeight:1.65}}>{selectedPaper.reliability}</div>
-            </div>
-          )}
-
-          {/* Annotations */}
-          <div style={{marginTop:16,paddingTop:16,borderTop:'1px solid var(--border)'}}>
-            <div style={{fontFamily:'monospace',fontSize:10,fontWeight:600,color:'var(--t2)',
-              textTransform:'uppercase',letterSpacing:'.08em',marginBottom:12}}>Team Annotations</div>
-            {(selectedPaper.annotations||[]).map(ann=>(
-              <div key={ann.id} style={{padding:'10px 12px',background:'var(--bg2)',
-                border:'1px solid var(--border)',borderRadius:'var(--radius)',marginBottom:8,
-                borderLeft:'3px solid rgba(37,99,235,.35)'}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:5}}>
-                  <div style={{display:'flex',alignItems:'center',gap:6,fontSize:10,color:'var(--t2)',fontFamily:'monospace'}}>
-                    <div style={{width:16,height:16,borderRadius:'50%',background:avatarColor(ann.user),
-                      display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:700,color:'#fff'}}>
-                      {(ann.user||'?')[0].toUpperCase()}
-                    </div>
-                    {ann.user} · {ann.timestamp}
-                  </div>
-                  <button onClick={()=>onDeleteAnnotation(ann.id)} style={{background:'transparent',
-                    border:'none',color:'var(--t2)',cursor:'pointer',padding:2,fontSize:13}}>&times;</button>
-                </div>
-                <div style={{fontSize:12,color:'var(--t1)',lineHeight:1.65}}>{ann.text}</div>
+            {/* Column 1 (Left) — Reliability Assessment · ShieldCheck */}
+            <div style={{
+              flex: 1, overflowY: 'auto', padding: 16,
+              borderRight: '1px solid var(--border)',
+            }}>
+              <div style={{
+                fontFamily: 'monospace', fontSize: 10, fontWeight: 600, color: 'var(--t2)',
+                textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12,
+                display: 'flex', alignItems: 'center', gap: 5,
+              }}>
+                <Icon name="ShieldCheck" size={11} color="var(--green)" />
+                Reliability Assessment
               </div>
-            ))}
-            <div style={{display:'flex',gap:6,marginTop:8}}>
-              <textarea value={newAnnotation} onChange={e=>setNewAnnotation(e.target.value)}
-                placeholder="Add a team annotation…" rows={2}
-                style={{flex:1,background:'var(--bg2)',border:'1px solid var(--border)',
-                  borderRadius:'var(--radius)',padding:'8px 12px',color:'var(--t0)',
-                  fontFamily:'var(--font-body)',fontSize:12,resize:'vertical',outline:'none'}}/>
-              <Btn primary onClick={()=>{onAddAnnotation(newAnnotation);setNewAnnotation('');}} disabled={!newAnnotation.trim()} style={{alignSelf:'flex-end'}}>
-                Add
-              </Btn>
+              {selectedPaper.reliability ? (
+                <div style={{ fontSize: 12, color: 'var(--t1)', lineHeight: 1.7 }}>
+                  {selectedPaper.reliability}
+                </div>
+              ) : (
+                <div style={{ fontSize: 11, color: 'var(--t2)', fontStyle: 'italic', lineHeight: 1.65 }}>
+                  Analyse this paper to generate a reliability assessment.
+                </div>
+              )}
             </div>
-          </div>
+
+            {/* Column 2 (Middle) — AI Summary · Sparkles */}
+            <div style={{
+              flex: 1, overflowY: 'auto', padding: 16,
+              borderRight: '1px solid var(--border)',
+            }}>
+              <div style={{
+                fontFamily: 'monospace', fontSize: 10, fontWeight: 600, color: 'var(--t2)',
+                textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12,
+                display: 'flex', alignItems: 'center', gap: 5,
+              }}>
+                <Icon name="Sparkles" size={11} color="var(--blue2)" />
+                AI Summary
+              </div>
+              {selectedPaper.summary ? (
+                <MarkdownContent text={selectedPaper.summary} />
+              ) : (
+                <div style={{ fontSize: 11, color: 'var(--t2)', fontStyle: 'italic', lineHeight: 1.65 }}>
+                  Analyse this paper to generate an AI summary.
+                </div>
+              )}
+            </div>
+
+            {/* Column 3 (Right) — File Info & Topics + Annotations · FileText */}
+            <div style={{ width: 300, flexShrink: 0, overflowY: 'auto', padding: 16 }}>
+              <div style={{
+                fontFamily: 'monospace', fontSize: 10, fontWeight: 600, color: 'var(--t2)',
+                textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12,
+                display: 'flex', alignItems: 'center', gap: 5,
+              }}>
+                <Icon name="FileText" size={11} color="var(--t2)" />
+                File Info &amp; Topics
+              </div>
+
+              {/* File metadata */}
+              <div style={{
+                marginBottom: 12, padding: '10px 12px', background: 'var(--bg2)',
+                border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+                fontSize: 11, fontFamily: 'monospace', color: 'var(--t2)',
+                display: 'flex', flexDirection: 'column', gap: 4,
+              }}>
+                <div><span style={{ color: 'var(--t1)' }}>Pages:</span> {selectedPaper.num_pages || '—'}</div>
+                <div><span style={{ color: 'var(--t1)' }}>Uploaded:</span> {fmtDate(selectedPaper.uploaded_at) || '—'}</div>
+                <div><span style={{ color: 'var(--t1)' }}>By:</span> {selectedPaper.uploaded_by || '—'}</div>
+              </div>
+
+              {/* Subtopics */}
+              {selectedPaper.subtopics?.length > 0 && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {selectedPaper.subtopics.map(st => (
+                      <span key={st} style={{
+                        display: 'inline-block', padding: '2px 8px', borderRadius: 5,
+                        fontFamily: 'monospace', fontSize: 10,
+                        background: 'var(--blue-bg2)', color: 'var(--blue3)',
+                        border: '1px solid var(--glass-border)',
+                      }}>{st}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Annotations */}
+              <div style={{ paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+                <div style={{
+                  fontFamily: 'monospace', fontSize: 10, fontWeight: 600, color: 'var(--t2)',
+                  textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10,
+                }}>Team Annotations</div>
+                {(selectedPaper.annotations || []).map(ann => (
+                  <div key={ann.id} style={{
+                    padding: '10px 12px', background: 'var(--bg2)',
+                    border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+                    marginBottom: 8, borderLeft: '3px solid rgba(37,99,235,.35)',
+                  }}>
+                    <div style={{
+                      display: 'flex', justifyContent: 'space-between',
+                      alignItems: 'center', marginBottom: 5,
+                    }}>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        fontSize: 10, color: 'var(--t2)', fontFamily: 'monospace',
+                      }}>
+                        <div style={{
+                          width: 16, height: 16, borderRadius: '50%',
+                          background: avatarColor(ann.user),
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 8, fontWeight: 700, color: '#fff',
+                        }}>
+                          {(ann.user || '?')[0].toUpperCase()}
+                        </div>
+                        {ann.user} · {ann.timestamp}
+                      </div>
+                      <button onClick={() => onDeleteAnnotation(ann.id)} style={{
+                        background: 'transparent', border: 'none',
+                        color: 'var(--t2)', cursor: 'pointer', padding: 2, fontSize: 13,
+                      }}>&times;</button>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--t1)', lineHeight: 1.65 }}>{ann.text}</div>
+                  </div>
+                ))}
+                <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                  <textarea value={newAnnotation} onChange={e => setNewAnnotation(e.target.value)}
+                    placeholder="Add a team annotation…" rows={2}
+                    style={{
+                      flex: 1, background: 'var(--bg2)', border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius)', padding: '8px 12px', color: 'var(--t0)',
+                      fontFamily: 'var(--font-body)', fontSize: 12, resize: 'vertical', outline: 'none',
+                    }} />
+                  <Btn primary
+                    onClick={() => { onAddAnnotation(newAnnotation); setNewAnnotation(''); }}
+                    disabled={!newAnnotation.trim()}
+                    style={{ alignSelf: 'flex-end' }}>
+                    Add
+                  </Btn>
+                </div>
+              </div>
+            </div>
+          </div>{/* end 3-column body */}
         </div>
       )}
     </div>
