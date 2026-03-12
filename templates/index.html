@@ -528,7 +528,8 @@ a { color: inherit; text-decoration: none; }
 }
 .nav-item.active .nav-badge { background: var(--blue); color: #fff; }
 
-.sb-papers { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 6px 12px; }
+.sb-scroll-middle { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
+.sb-papers { overflow-y: visible; padding: 4px 6px 12px; }
 .sb-paper-item {
   padding: 8px 10px; border-radius: var(--radius);
   cursor: pointer; margin-bottom: 1px;
@@ -2249,6 +2250,9 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
     </button>
   </div>
 
+  <!-- Scrollable middle section: nav + papers list -->
+  <div class="sb-scroll-middle">
+
   <div class="nav-section" aria-hidden="true">Views</div>
 
   <!-- [RUBRIC B-E: nav items with aria-current for screen readers] -->
@@ -2311,6 +2315,8 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
       </div>
     </template>
   </div>
+
+  </div><!-- /sb-scroll-middle -->
 
   <div class="sb-footer">
     <div class="proj-label sb-footer-label">Team</div>
