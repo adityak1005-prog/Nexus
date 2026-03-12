@@ -22,7 +22,6 @@
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
   onload="window._katexReady=true"></script>
-<script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
   window.mermaid = mermaid;
@@ -945,16 +944,6 @@ a { color: inherit; text-decoration: none; }
 .chat-input-hint { font-size: 10px; color: var(--t2); margin-top: 6px; display: flex; gap: 12px; font-family: var(--mono); }
 
 /* ==========================================================================
-   KNOWLEDGE GRAPH
-   ========================================================================== */
-.kg-header { flex-shrink: 0; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--glass-bg); backdrop-filter: var(--glass-blur); display: flex; align-items: center; gap: 16px; }
-.kg-body { flex: 1; min-height: 0; position: relative; background: var(--bg0); }
-#kg-canvas { position: absolute; inset: 0; }
-.kg-legend { display: flex; gap: 12px; }
-.kg-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--t1); }
-.kg-legend-dot { width: 9px; height: 9px; border-radius: 50%; }
-
-/* ==========================================================================
    DIAGRAMS
    ========================================================================== */
 .diagram-header { flex-shrink: 0; padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--glass-bg); backdrop-filter: var(--glass-blur); }
@@ -1367,112 +1356,71 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
 
 /* ══════════════════════════════════════════════════════════════
    DESIGN v2 — ENHANCED POLISH, AESTHETICS & VISUAL IMPROVEMENTS
+   Theme-neutral rules first, then dark/light scoped separately.
    ══════════════════════════════════════════════════════════════ */
 
-/* Brand identity — electric gradient logo */
+/* ── THEME-NEUTRAL (apply in both modes) ─────────────────────── */
+
+/* Brand logo — always electric gradient */
 .brand-logo {
   background: linear-gradient(135deg, #1a56db 0%, #3b82f6 55%, #06b6d4 100%) !important;
-  box-shadow: 0 0 18px rgba(37,99,235,.55), 0 0 36px rgba(6,182,212,.12) !important;
+  box-shadow: 0 0 18px rgba(37,99,235,.45), 0 0 36px rgba(6,182,212,.1) !important;
 }
 .brand-wordmark { font-size: 16px !important; letter-spacing: -0.5px !important; }
 
-/* Sidebar — deeper gradient */
-.sidebar {
-  background: linear-gradient(175deg, rgba(6,10,18,.99) 0%, rgba(4,8,16,1) 100%) !important;
-  border-right-color: rgba(37,99,235,.1) !important;
-}
-/* Nav active — gradient highlight pill */
-.nav-item.active {
-  background: linear-gradient(90deg, rgba(37,99,235,.22) 0%, rgba(37,99,235,.05) 100%) !important;
-  border-color: rgba(37,99,235,.28) !important;
-}
+/* Nav active indicator glow */
 .nav-item.active::before {
   box-shadow: 0 0 10px var(--glow-blue), 0 0 22px rgba(37,99,235,.18) !important;
 }
 
-/* Topbar — refined gradient */
-.topbar {
-  background: linear-gradient(90deg, rgba(4,8,16,.97) 0%, rgba(7,12,22,.95) 100%) !important;
-  border-bottom-color: rgba(37,99,235,.1) !important;
-}
+/* Topbar accent line */
 .topbar::after {
-  background: linear-gradient(90deg, transparent 0%, rgba(37,99,235,.25) 40%, rgba(6,182,212,.18) 65%, transparent 100%) !important;
+  background: linear-gradient(90deg, transparent 0%, rgba(37,99,235,.22) 40%, rgba(6,182,212,.15) 65%, transparent 100%) !important;
 }
 
-/* Tab bar */
-.tab-bar {
-  background: linear-gradient(180deg, rgba(7,12,22,.97) 0%, rgba(8,15,28,.92) 100%) !important;
-}
-.tab-item.active { background: linear-gradient(180deg, rgba(37,99,235,.1) 0%, transparent 100%); }
+/* Tab active underline highlight */
+.tab-item.active { background: linear-gradient(180deg, var(--blue-bg) 0%, transparent 100%); }
 
-/* Cards — subtle gradient + hover lift */
+/* Cards — hover lift (uses CSS vars so works in both themes) */
 .card { transition: border-color .22s, box-shadow .22s, transform .18s !important; }
 .card:hover {
-  border-color: rgba(37,99,235,.22) !important;
-  box-shadow: 0 6px 28px rgba(37,99,235,.09), 0 1px 0 rgba(255,255,255,.03) inset !important;
+  border-color: var(--glass-border) !important;
+  box-shadow: 0 6px 28px var(--glow-blue2) !important;
   transform: translateY(-1px) !important;
 }
-.stat-card {
-  background: linear-gradient(135deg, rgba(12,20,34,.88) 0%, rgba(8,14,24,.92) 100%) !important;
-  border-color: rgba(37,99,235,.1) !important;
-}
 .stat-card:hover {
-  border-color: rgba(37,99,235,.2) !important;
-  box-shadow: 0 8px 32px rgba(37,99,235,.1), 0 0 0 1px rgba(37,99,235,.08) !important;
+  border-color: var(--glass-border) !important;
+  box-shadow: 0 8px 32px var(--glow-blue2) !important;
 }
 
-/* Buttons — more vibrant primary */
+/* Buttons — gradient primary (works in both themes) */
 .btn-primary {
   background: linear-gradient(135deg, #1748d4 0%, #2563eb 60%, #3b7ef5 100%) !important;
-  box-shadow: 0 2px 14px rgba(37,99,235,.38) !important;
-  border-color: rgba(59,130,246,.55) !important;
+  box-shadow: 0 2px 14px rgba(37,99,235,.35) !important;
+  border-color: rgba(59,130,246,.5) !important;
 }
 .btn-primary:hover {
   background: linear-gradient(135deg, #1a50e0 0%, #2563eb 40%, #4282f8 100%) !important;
-  box-shadow: 0 5px 22px rgba(37,99,235,.52) !important;
+  box-shadow: 0 5px 22px rgba(37,99,235,.48) !important;
   transform: translateY(-2px) !important;
 }
 
-/* Paper cards */
+/* Paper cards hover */
 .paper-card:hover {
-  box-shadow: 0 12px 40px rgba(37,99,235,.14) !important;
-  border-color: rgba(37,99,235,.3) !important;
+  box-shadow: 0 12px 40px var(--glow-blue2) !important;
+  border-color: var(--blue2) !important;
+  opacity: 0.85;
 }
+.paper-card:hover { opacity: 1; }
 
-/* Chat AI bubble */
-.msg-ai .chat-bubble {
-  background: linear-gradient(135deg, rgba(12,20,34,.95) 0%, rgba(7,12,22,.9) 100%) !important;
-  border-color: rgba(37,99,235,.22) !important;
-  box-shadow: 0 2px 14px rgba(37,99,235,.07) !important;
-}
+/* Chat input focus */
 .chat-textarea:focus {
-  box-shadow: 0 0 0 3px rgba(37,99,235,.18), 0 0 18px rgba(37,99,235,.07) !important;
-}
-
-/* Knowledge graph — immersive dark canvas with grid */
-.kg-body {
-  background: radial-gradient(ellipse at 38% 28%, rgba(15,28,55,.85) 0%, #03070F 75%) !important;
-}
-.kg-body::after {
-  content: '';
-  position: absolute; inset: 0;
-  background-image:
-    linear-gradient(rgba(37,99,235,.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37,99,235,.025) 1px, transparent 1px);
-  background-size: 48px 48px;
-  pointer-events: none;
-  z-index: 0;
-}
-#kg-canvas { z-index: 1; position: relative; }
-
-/* Diagram canvas */
-.diagram-canvas {
-  background: radial-gradient(ellipse at 50% 15%, rgba(12,20,34,.5) 0%, var(--bg0) 80%) !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15), 0 0 18px rgba(37,99,235,.06) !important;
 }
 
 /* Deconstructor blocks — hover lift */
 .decon-scaffold-block { transition: box-shadow .2s, transform .15s; }
-.decon-scaffold-block:hover { box-shadow: 0 4px 22px rgba(37,99,235,.09); transform: translateX(3px); }
+.decon-scaffold-block:hover { box-shadow: 0 4px 22px var(--glow-blue2); transform: translateX(3px); }
 
 /* Progress bar — animated gradient */
 .progress-fill {
@@ -1482,34 +1430,22 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
 }
 @keyframes progress-shimmer { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
 
-/* Collision cards */
-.collision-card {
-  background: linear-gradient(135deg, rgba(239,68,68,.08) 0%, rgba(8,15,28,.65) 100%) !important;
-}
-
-/* Annotations — blue left border accent */
-.annotation { border-left: 3px solid rgba(37,99,235,.4); transition: border-color .15s; }
+/* Annotations — blue left border */
+.annotation { border-left: 3px solid rgba(37,99,235,.35); transition: border-color .15s; }
 .annotation:hover { border-left-color: var(--cyan); }
 
-/* Scrollbar enhancement */
-::-webkit-scrollbar-thumb { background: rgba(37,99,235,.25) !important; }
-::-webkit-scrollbar-thumb:hover { background: rgba(59,130,246,.5) !important; }
-
-/* Upload zone — better active state */
+/* Upload zone hover */
 .upload-zone:hover, .upload-zone.drag-over {
-  box-shadow: 0 0 0 4px rgba(37,99,235,.18), 0 10px 36px rgba(37,99,235,.14) !important;
+  box-shadow: 0 0 0 4px var(--glow-blue2), 0 10px 36px var(--glow-blue2) !important;
 }
 
-/* Home hero — more impressive headline */
+/* Home hero headline size */
 .home-hero h1 { font-size: clamp(22px, 3.5vw, 34px) !important; }
-.home-hero {
-  background: linear-gradient(155deg, rgba(37,99,235,.07) 0%, rgba(6,182,212,.03) 45%, transparent 100%) !important;
-}
 
 /* Heatmap cells */
-.heatmap-cell:hover { box-shadow: 0 0 8px rgba(59,130,246,.5) !important; }
+.heatmap-cell:hover { box-shadow: 0 0 8px rgba(59,130,246,.45) !important; }
 
-/* KaTeX styling in markdown content */
+/* KaTeX styling */
 .md-content .katex { font-size: 1.05em; }
 .md-content .katex-display {
   background: var(--bg2);
@@ -1522,17 +1458,17 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
 }
 .chat-content .katex { font-size: 1em; }
 .chat-content .katex-display {
-  background: rgba(37,99,235,.06);
-  border: 1px solid rgba(37,99,235,.15);
+  background: var(--blue-bg);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   padding: 10px 14px;
   margin: 8px 0;
   overflow-x: auto;
 }
 
-/* Empty state icon — glowing circle background */
+/* Empty state icon */
 .empty-state-icon {
-  background: radial-gradient(circle, rgba(37,99,235,.1) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--blue-bg) 0%, transparent 70%);
   border-radius: 50%;
   width: 72px; height: 72px;
   margin: 0 auto 16px;
@@ -1541,10 +1477,114 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
   opacity: 1 !important;
 }
 
-/* Mermaid output styling */
-#mermaid-output svg {
-  filter: drop-shadow(0 4px 24px rgba(37,99,235,.12));
+/* Mermaid svg shadow */
+#mermaid-output svg { filter: drop-shadow(0 4px 24px rgba(37,99,235,.1)); }
+
+/* ── DARK MODE ONLY ───────────────────────────────────────────── */
+[data-theme="dark"] .sidebar {
+  background: linear-gradient(175deg, rgba(6,10,18,.99) 0%, rgba(4,8,16,1) 100%) !important;
+  border-right-color: rgba(37,99,235,.1) !important;
 }
+[data-theme="dark"] .nav-item.active {
+  background: linear-gradient(90deg, rgba(37,99,235,.22) 0%, rgba(37,99,235,.05) 100%) !important;
+  border-color: rgba(37,99,235,.28) !important;
+}
+[data-theme="dark"] .topbar {
+  background: linear-gradient(90deg, rgba(4,8,16,.97) 0%, rgba(7,12,22,.95) 100%) !important;
+  border-bottom-color: rgba(37,99,235,.1) !important;
+}
+[data-theme="dark"] .tab-bar {
+  background: linear-gradient(180deg, rgba(7,12,22,.97) 0%, rgba(8,15,28,.92) 100%) !important;
+}
+[data-theme="dark"] .stat-card {
+  background: linear-gradient(135deg, rgba(12,20,34,.88) 0%, rgba(8,14,24,.92) 100%) !important;
+  border-color: rgba(37,99,235,.1) !important;
+}
+[data-theme="dark"] .msg-ai .chat-bubble {
+  background: linear-gradient(135deg, rgba(12,20,34,.95) 0%, rgba(7,12,22,.9) 100%) !important;
+  border-color: rgba(37,99,235,.22) !important;
+  box-shadow: 0 2px 14px rgba(37,99,235,.07) !important;
+}
+[data-theme="dark"] .diagram-canvas {
+  background: radial-gradient(ellipse at 50% 15%, rgba(12,20,34,.5) 0%, var(--bg0) 80%) !important;
+}
+[data-theme="dark"] .home-hero {
+  background: linear-gradient(155deg, rgba(37,99,235,.07) 0%, rgba(6,182,212,.03) 45%, transparent 100%) !important;
+}
+[data-theme="dark"] .collision-card {
+  background: linear-gradient(135deg, rgba(239,68,68,.08) 0%, rgba(8,15,28,.65) 100%) !important;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(37,99,235,.25) !important; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: rgba(59,130,246,.5) !important; }
+
+/* ── LIGHT MODE ONLY ──────────────────────────────────────────── */
+[data-theme="light"] .sidebar {
+  background: #ffffff !important;
+  border-right-color: #E2E8F0 !important;
+}
+[data-theme="light"] .nav-item.active {
+  background: rgba(29,78,216,.07) !important;
+  border-color: rgba(29,78,216,.15) !important;
+  color: #1d4ed8 !important;
+}
+[data-theme="light"] .topbar {
+  background: rgba(255,255,255,.95) !important;
+  border-bottom-color: #E2E8F0 !important;
+  backdrop-filter: blur(12px);
+}
+[data-theme="light"] .tab-bar {
+  background: #ffffff !important;
+  border-bottom-color: #E2E8F0 !important;
+}
+[data-theme="light"] .stat-card {
+  background: linear-gradient(135deg, #ffffff 0%, #F8FAFC 100%) !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04) !important;
+}
+[data-theme="light"] .stat-card:hover {
+  box-shadow: 0 6px 24px rgba(29,78,216,.08) !important;
+}
+[data-theme="light"] .card {
+  background: #ffffff !important;
+  border-color: #E2E8F0 !important;
+}
+[data-theme="light"] .card:hover {
+  box-shadow: 0 6px 24px rgba(29,78,216,.08) !important;
+  border-color: rgba(29,78,216,.2) !important;
+}
+[data-theme="light"] .msg-ai .chat-bubble {
+  background: #EFF6FF !important;
+  border-color: #BFDBFE !important;
+}
+[data-theme="light"] .diagram-canvas {
+  background: linear-gradient(135deg, #EFF6FF 0%, #F8FAFC 100%) !important;
+}
+[data-theme="light"] .home-hero {
+  background: linear-gradient(155deg, rgba(29,78,216,.05) 0%, rgba(6,182,212,.02) 45%, transparent 100%) !important;
+}
+[data-theme="light"] .collision-card {
+  background: linear-gradient(135deg, rgba(239,68,68,.05) 0%, #ffffff 100%) !important;
+}
+[data-theme="light"] .paper-card {
+  background: #ffffff !important;
+  border-color: #E2E8F0 !important;
+}
+[data-theme="light"] .paper-card:hover {
+  box-shadow: 0 8px 28px rgba(29,78,216,.1) !important;
+  border-color: rgba(29,78,216,.25) !important;
+}
+[data-theme="light"] .chat-bubble {
+  background: #F1F5F9 !important;
+  border-color: #E2E8F0 !important;
+}
+[data-theme="light"] .upload-zone {
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
+}
+[data-theme="light"] .brand-version { color: #64748B !important; }
+[data-theme="light"] .nav-section { color: #94A3B8 !important; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(29,78,216,.18) !important; }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(29,78,216,.35) !important; }
 
 </style>
 
@@ -1623,10 +1663,6 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
       <span class="ico" aria-hidden="true">👥</span>
       <span x-text="t('collab')">Collaboration</span>
       <span class="nav-badge" x-show="collisions.length > 0" x-text="collisions.length" style="background:var(--red);color:#fff" aria-label="contradictions detected"></span>
-    </div>
-    <div class="nav-item" :class="{active:tab==='graph'}" @click="tab='graph'; mobileSidebarOpen=false; $nextTick(()=>setTimeout(()=>renderGraph(),200))" role="listitem" :aria-current="tab==='graph' ? 'page' : false" tabindex="0" @keyup.enter="tab='graph'; $nextTick(()=>setTimeout(()=>renderGraph(),200))">
-      <span class="ico" aria-hidden="true">◈</span>
-      <span x-text="t('graph')">Knowledge Graph</span>
     </div>
     <div class="nav-item" :class="{active:tab==='visuals'}" @click="tab='visuals'; mobileSidebarOpen=false" role="listitem" :aria-current="tab==='visuals' ? 'page' : false" tabindex="0" @keyup.enter="tab='visuals'">
       <span class="ico" aria-hidden="true">◇</span>
@@ -1735,9 +1771,6 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
       <span x-text="t('collab')">Collab</span>
       <span class="tab-count" x-show="collisions.length > 0" x-text="collisions.length" style="background:var(--red);color:#fff"></span>
     </button>
-    <button class="tab-item" :class="{active:tab==='graph'}" @click="tab='graph'; $nextTick(()=>setTimeout(()=>renderGraph(),200))" role="tab" :aria-selected="tab==='graph'">
-      <span x-text="t('graph')">Graph</span>
-    </button>
     <button class="tab-item" :class="{active:tab==='visuals'}" @click="tab='visuals'" role="tab" :aria-selected="tab==='visuals'">
       <span x-text="t('diagrams')">Diagrams</span>
     </button>
@@ -1816,11 +1849,6 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
               <div class="feature-card-icon">🧩</div>
               <div class="feature-card-title">Concept Deconstructor</div>
               <div class="feature-card-desc">Break dense equations and complex ideas into scaffolded learning modules for different expertise levels.</div>
-            </div>
-            <div class="feature-card" @click="tab='graph'; $nextTick(()=>setTimeout(()=>renderGraph(),200))" tabindex="0" role="button" @keyup.enter="tab='graph'">
-              <div class="feature-card-icon">◈</div>
-              <div class="feature-card-title">Knowledge Graph</div>
-              <div class="feature-card-desc">Interactive visual map of how papers connect. Drag, zoom, and explore topic clusters.</div>
             </div>
           </div>
         </div>
@@ -2660,45 +2688,6 @@ input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue2); outline-o
       </div>
     </article>
 
-    <!-- ─── KNOWLEDGE GRAPH ─── -->
-    <article class="panel-col" x-show="project && tab==='graph'" aria-label="Knowledge graph">
-      <div class="kg-header">
-        <div>
-          <div style="font-family:var(--display);font-size:14px;font-weight:700">Knowledge Graph</div>
-          <div style="font-size:11px;color:var(--t1);margin-top:2px">Drag to rearrange · Scroll to zoom · Click to inspect</div>
-        </div>
-        <div style="margin-left:auto;display:flex;gap:16px;align-items:center">
-          <div class="kg-legend" aria-hidden="true">
-            <div class="kg-legend-item">
-              <div class="kg-legend-dot" style="background:var(--blue2);border-radius:3px;width:10px;height:10px"></div>
-              Paper
-            </div>
-            <div class="kg-legend-item">
-              <div class="kg-legend-dot" style="background:var(--purple)"></div>
-              Topic
-            </div>
-          </div>
-          <div style="font-size:11px;color:var(--t2);font-family:var(--mono)">
-            <span x-text="Object.keys(project?.papers||{}).length"></span>p ·
-            <span x-text="stats.topics||0"></span>t
-          </div>
-          <span x-show="graphSelectedNode" style="font-size:11px;color:var(--blue2);font-family:var(--mono)" x-text="'› '+graphSelectedNode"></span>
-          <button class="btn btn-ghost btn-sm" @click="renderGraph()" aria-label="Refresh knowledge graph">↺ Refresh</button>
-        </div>
-      </div>
-      <div class="kg-body">
-        <div id="kg-canvas" role="img" aria-label="Interactive knowledge graph visualization"></div>
-        <div x-show="Object.keys(project?.papers||{}).length===0"
-             style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
-          <div class="empty-state">
-            <div class="empty-state-icon" aria-hidden="true">◈</div>
-            <div class="empty-state-title">No graph data</div>
-            <div class="empty-state-sub">Upload and analyse papers to build the knowledge graph</div>
-          </div>
-        </div>
-      </div>
-    </article>
-
     <!-- ─── DIAGRAMS ─── -->
     <article class="panel-col" x-show="project && tab==='visuals'" aria-label="Diagram generator">
       <div class="diagram-header">
@@ -3188,10 +3177,6 @@ function app() {
     gapLoading: false,
     gapResult: null,
 
-    graphSelectedNode: '',
-    _kgNetwork: null,
-    _kgObserver: null,
-
     diagramHash: '',
     diagramType: 'flowchart',
     diagramLoading: false,
@@ -3249,7 +3234,7 @@ function app() {
     /* ── i18n translations ───────────────────────────────────────── */
     // [RUBRIC B-E: Multilingual UI labels]
     translations: {
-      en: { home:'Home', dashboard:'Dashboard', library:'Library', chat:'Research Chat', insights:'Insights', collab:'Collaboration', graph:'Knowledge Graph', diagrams:'Diagrams', deconstructor:'Deconstructor', upload:'Upload PDF', chat_placeholder:'Ask a question about your research papers…', rate_response:'Rate this response', feedback_thanks:'Thank you for your feedback!', expertise_label:'AI Response Depth', beginner:'Beginner', intermediate:'Intermediate', advanced:'Advanced' },
+      en: { home:'Home', dashboard:'Dashboard', library:'Library', chat:'Research Chat', insights:'Insights', collab:'Collaboration', diagrams:'Diagrams', deconstructor:'Deconstructor', upload:'Upload PDF', chat_placeholder:'Ask a question about your research papers…', rate_response:'Rate this response', feedback_thanks:'Thank you for your feedback!', expertise_label:'AI Response Depth', beginner:'Beginner', intermediate:'Intermediate', advanced:'Advanced' },
       ar: { home:'الرئيسية', dashboard:'لوحة البيانات', library:'المكتبة', chat:'محادثة بحثية', insights:'رؤى', collab:'تعاون', graph:'خريطة المعرفة', diagrams:'الرسوم البيانية', deconstructor:'مفكك المفاهيم', upload:'رفع ملف PDF', chat_placeholder:'اطرح سؤالاً عن أوراقك البحثية…', rate_response:'قيّم هذه الإجابة', feedback_thanks:'شكراً على ملاحظاتك!', expertise_label:'عمق الاستجابة', beginner:'مبتدئ', intermediate:'متوسط', advanced:'متقدم' },
       hi: { home:'होम', dashboard:'डैशबोर्ड', library:'पुस्तकालय', chat:'शोध चैट', insights:'अंतर्दृष्टि', collab:'सहयोग', graph:'ज्ञान ग्राफ', diagrams:'आरेख', deconstructor:'अवधारणा विघटक', upload:'PDF अपलोड करें', chat_placeholder:'अपने शोध पत्रों के बारे में प्रश्न पूछें…', rate_response:'इस उत्तर को रेट करें', feedback_thanks:'आपकी प्रतिक्रिया के लिए धन्यवाद!', expertise_label:'AI उत्तर की गहराई', beginner:'शुरुआती', intermediate:'मध्यवर्ती', advanced:'उन्नत' },
       zh: { home:'首页', dashboard:'仪表板', library:'论文库', chat:'研究对话', insights:'洞察', collab:'协作', graph:'知识图谱', diagrams:'图表', deconstructor:'概念解构器', upload:'上传 PDF', chat_placeholder:'提问关于您的研究论文…', rate_response:'评价此回复', feedback_thanks:'感谢您的反馈！', expertise_label:'AI回复深度', beginner:'初级', intermediate:'中级', advanced:'高级' },
@@ -3797,128 +3782,6 @@ function app() {
       this.showToast('Mermaid code copied to clipboard', 'success');
     },
 
-    /* ── Knowledge Graph ─────────────────────────────────────────── */
-    async renderGraph() {
-      if (!this.activePid || this.tab !== 'graph') return;
-      if (this._kgObserver) { this._kgObserver.disconnect(); this._kgObserver = null; }
-      try {
-        const r = await fetch(`/api/projects/${this.activePid}/knowledge-graph`);
-        const { nodes, edges } = await r.json();
-        const canvas = document.getElementById('kg-canvas');
-        if (!canvas) return;
-        let waited = 0;
-        while (canvas.clientWidth < 10 && waited < 3000) {
-          await new Promise(res => setTimeout(res, 50)); waited += 50;
-        }
-        if (nodes.length === 0) return;
-
-        const isDark = this.darkMode;
-        const isPaper = n => n.group === 'paper';
-
-        // [FIX #7] Tooltip must be a DOM element — HTML string shows as raw text in vis-network v9
-        const mkTooltip = (text) => {
-          const d = document.createElement('div');
-          d.style.cssText = `background:${isDark?'#0b1629':'#f8fafc'};border:1px solid ${isDark?'rgba(37,99,235,.3)':'#e2e8f0'};border-radius:10px;padding:10px 14px;font-family:DM Sans,sans-serif;font-size:12px;color:${isDark?'#e8f0fe':'#0f172a'};max-width:260px;line-height:1.65;box-shadow:0 8px 32px rgba(0,0,0,.55);word-break:break-word;`;
-          d.textContent = text;
-          return d;
-        };
-
-        const visNodes = new vis.DataSet(nodes.map(n => ({
-          id: n.id,
-          label: isPaper(n)
-            ? (n.label.length > 30 ? n.label.slice(0,28)+'…' : n.label)
-            : (n.label.length > 34 ? n.label.slice(0,32)+'…' : n.label),
-          color: isPaper(n)
-            ? {
-                background: isDark ? '#0e2150':'#dbeafe',
-                border: '#3b82f6',
-                highlight: {background: isDark?'#1a3a6e':'#bfdbfe', border:'#60a5fa'},
-                hover: {background: isDark?'#163060':'#bfdbfe', border:'#60a5fa'}
-              }
-            : {
-                background: isDark ? '#1e0a3c':'#f3e8ff',
-                border: '#a855f7',
-                highlight: {background: isDark?'#3b1170':'#e9d5ff', border:'#c084fc'},
-                hover: {background: isDark?'#2e0d5a':'#e9d5ff', border:'#c084fc'}
-              },
-          font: {
-            color: isDark ? '#f0f6fc':'#0f172a',
-            size: isPaper(n) ? 14 : 12,
-            face: 'DM Sans, sans-serif',
-            bold: isPaper(n) ? { color: isDark?'#e8f0fe':'#1e40af', size:14, face:'DM Sans, sans-serif', vadjust:0 } : undefined,
-          },
-          shape: isPaper(n) ? 'box' : 'ellipse',
-          size: isPaper(n) ? 22 : 15,
-          borderWidth: isPaper(n) ? 2 : 1.5,
-          borderWidthSelected: 3,
-          margin: isPaper(n) ? { top:10, right:12, bottom:10, left:12 } : { top:6, right:8, bottom:6, left:8 },
-          shadow: {
-            enabled: true,
-            color: isPaper(n) ? 'rgba(59,130,246,.35)' : 'rgba(168,85,247,.28)',
-            size: 14, x: 0, y: 4
-          },
-          title: mkTooltip(n.title || n.label),
-        })));
-
-        const visEdges = new vis.DataSet(edges.map((e,i) => ({
-          id: i, from: e.from, to: e.to,
-          color: {
-            color: isDark ? 'rgba(59,130,246,.3)' : '#cbd5e1',
-            highlight: '#3b82f6',
-            hover: '#60a5fa',
-            opacity: 0.85
-          },
-          width: 1.8, hoverWidth: 3, selectionWidth: 3.5,
-          smooth: { type:'curvedCW', roundness:0.12 },
-          arrows: { to: { enabled: false } },
-        })));
-
-        if (this._kgNetwork) { this._kgNetwork.destroy(); this._kgNetwork = null; }
-        const network = new vis.Network(canvas, { nodes: visNodes, edges: visEdges }, {
-          physics: {
-            enabled: true, solver: 'forceAtlas2Based',
-            forceAtlas2Based: {
-              gravitationalConstant: -90,
-              centralGravity: 0.008,
-              springLength: 190,
-              springConstant: 0.04,
-              damping: 0.45,
-              avoidOverlap: 0.8,
-            },
-            stabilization: { iterations: 300, updateInterval: 20 },
-          },
-          interaction: {
-            hover: true,
-            tooltipDelay: 100,
-            navigationButtons: true,
-            keyboard: false,
-            zoomView: true,
-            dragView: true,
-            multiselect: false,
-          },
-          layout: { improvedLayout: true, randomSeed: 7 },
-          nodes: { scaling: { min: 10, max: 30 } },
-        });
-        this._kgNetwork = network;
-        network.on('click', params => {
-          if (params.nodes.length > 0) {
-            const node = visNodes.get(params.nodes[0]);
-            this.graphSelectedNode = node ? node.label : '';
-          } else { this.graphSelectedNode = ''; }
-        });
-        network.on('stabilizationIterationsDone', () => {
-          network.fit({ animation: { duration:600, easingFunction:'easeInOutQuad' } });
-        });
-        this._kgObserver = new ResizeObserver(() => {
-          if (this._kgNetwork) { this._kgNetwork.redraw(); this._kgNetwork.fit({ animation:false }); }
-        });
-        this._kgObserver.observe(canvas);
-      } catch (e) {
-        console.error('Graph render failed:', e);
-        this.showToast('Knowledge graph failed: ' + e.message, 'error');
-      }
-    },
-
     /* ── [RUBRIC 3C] Engagement score (Supervisor view) ─────────── */
     computeEngagementScore() {
       if (!this.project) return '—';
@@ -4041,7 +3904,7 @@ function app() {
         chat:          'Research Chat',
         insights:      'Insights & Gap Analysis',
         collab:        'Collaboration',
-        graph:         'Knowledge Graph',
+        graph:         'Knowledge Graph', // kept for safety, tab removed
         visuals:       'Diagram Generator',
         deconstructor: 'Concept Deconstructor',
       };
