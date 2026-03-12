@@ -5,17 +5,17 @@ python-multipart==0.0.12
 jinja2==3.1.4
 
 # FIX 1: Pin Pydantic to v1.x
-pydantic==1.10.21
+pydantic
 
 # FIX 2: Pin LangChain ecosystem to versions compatible with Pydantic v1
-langchain==0.1.20
-langchain-core==0.1.52
-langchain-google-genai==1.0.3
-langchain-text-splitters==0.0.1
-langgraph==0.0.39
+langchain
+langchain-core
+langchain-google-genai
+langchain-text-splitters
+langgraph
 
 # FIX 3: Add langchain-community 
-langchain-community==0.0.38
+langchain-community
 
 google-generativeai
 
