@@ -3,16 +3,32 @@ fastapi==0.115.5
 uvicorn[standard]==0.32.1
 python-multipart==0.0.12
 jinja2==3.1.4
-pydantic
+
+# FIX 1: Pin Pydantic to v1.x
+# app.py uses @validator (Pydantic v1 API). Pydantic v2 moved it to
+# @field_validator with a different signature. Leaving this unpinned causes
+# a silent runtime crash the first time a request body is validated.
+pydantic==1.10.21
 
 # ── AI / LLM + Embeddings (one key covers everything) ─────────────────────────
 # Gemini Flash → summarization, chat, gap analysis, diagrams
-# Gemini text-embedding-004 → vector embeddings for RAG (replaces sentence-transformers)
-langchain
-langchain-core
-langchain-google-genai    # covers both ChatGoogleGenerativeAI + GoogleGenerativeAIEmbeddings
-langchain-text-splitters
-langgraph
+# gemini-embedding-001 → 3072-dim vectors for RAG (no local model needed)
+
+# FIX 2: Pin LangChain ecosystem to avoid breaking cross-package changes.
+# LangChain releases often break internal APIs between minor versions;
+# unpinned installs routinely resolve to incompatible combinations.
+langchain==0.3.25
+langchain-core==0.3.55
+langchain-google-genai==2.1.4  # ChatGoogleGenerativeAI + GoogleGenerativeAIEmbeddings
+langchain-text-splitters==0.3.8
+langgraph==0.3.34
+
+# FIX 3: Add langchain-community — analysis.py imports it as a fallback
+# when langchain-tavily is not installed (try/except chain at line 148).
+# Without it, the except block raises a second ImportError and the web
+# search agent silently fails to initialise even with a valid Tavily key.
+langchain-community==0.3.23
+
 google-generativeai>=0.8.3
 
 # NOTE: No PyTorch, no sentence-transformers, no CUDA
@@ -24,6 +40,11 @@ supabase==2.10.0         # project/chat/annotation storage — 500MB free Postgr
 
 # ── PDF parsing ────────────────────────────────────────────────────────────────
 pypdf==5.1.0
+
+# OPTIONAL: unstructured gives higher-quality text extraction from complex PDFs
+# (multi-column layouts, tables, scanned pages). ingestion.py tries it first
+# and falls back to pypdf automatically — safe to comment out if RAM is tight.
+# unstructured[pdf]==0.16.23
 
 # ── Optional: web search in Research Chat ─────────────────────────────────────
 langchain-tavily==0.1.6
