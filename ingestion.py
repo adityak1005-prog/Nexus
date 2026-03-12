@@ -23,8 +23,8 @@ from projects import get_chroma_collection_name
 load_dotenv()
 logging.getLogger("langsmith").setLevel(logging.WARNING)
 
-EMBED_MODEL    = "models/text-embedding-001"   # 768-dim, free via Gemini API 
-EMBED_DIM      = 768
+EMBED_MODEL    = "models/text-embedding-001"   # 3072-dim, free via Gemini API 
+EMBED_DIM      = 3072
 CHUNK_SIZE     = 900
 CHUNK_OVERLAP  = 150
 PINECONE_INDEX = os.getenv("PINECONE_INDEX", "nexus-papers")
@@ -200,7 +200,7 @@ def ingest_pdf(pdf_path: str, project_id: str, uploaded_by: str = "anonymous") -
 
     # Check if already ingested (query by doc_hash metadata)
     existing = idx.query(
-        vector=[0.0] * 384, top_k=1, namespace=ns,
+        vector=[0.0] * 3072, top_k=1, namespace=ns,
         filter={"doc_hash": {"$eq": dh}}, include_metadata=False
     )
     if existing["matches"]:
